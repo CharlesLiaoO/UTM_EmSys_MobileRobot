@@ -7,5 +7,16 @@
 			"path": "Vehicle"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.associations": {
+			"*.prg": "vb",
+			"*.ini": "ini",
+			"*.h": "cpp",
+			"README": "plaintext",
+			"*.ino": "cpp",
+			"*.json": "jsonc",
+			"istream": "cpp",
+			"ostream": "cpp"
+		}
+	}
 }
