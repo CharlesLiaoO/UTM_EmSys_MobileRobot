@@ -2,13 +2,14 @@
 // #include <string.h>
 #include <ESP8266WiFi.h>
 
-// const char* ssid = "R1216_2.4GHz"; // key in your own SSID
-// const char* password = "r121612321"; // key in your own WiFi access point password
-const char* ssid = "LCH-DELL"; // key in your own SSID
-const char* password = "lch12345678"; // key in your own WiFi access point password
+const char* ssid = "R1216_2.4GHz";
+const char* password = "r121612321";
+const char* host = "192.168.1.4";
 
-// const char* host = "192.168.1.4";
-const char* host = "192.168.137.1";
+// const char* ssid = "LCH-DELL";
+// const char* password = "lch12345678";
+// const char* host = "192.168.137.1";
+
 const int port = 2020;
 
 int NotLoop = 0;
@@ -43,7 +44,6 @@ void setup() {
   Serial.print("connecting to robot server: ");
   Serial.println(host);
 
-  // Use WiFiClient class to create TCP connections
   if (!client.connect(host, port)) {
     Serial.println("connection failed");
     ++NotLoop;
@@ -54,37 +54,50 @@ void setup() {
   Serial.println();
 }
 
+int wifiClient_WaitReadAll(char * readData) {
+  int readLength = 0;
+  while (readLength = client.available(), readLength == 0) {}
+  Serial.printf("read bytes available=%d\r\n", readLength);
+  return client.read(readData, readLength);
+}
+
+void wifiClient_WaitReadCstr(char * cstr) {
+  int size = wifiClient_WaitReadAll(cstr);
+  cstr[size] = 0;
+}
+
 void loop() {
-  // delay(1000);  // Delay does not make the Arduino consume less energy.
   if (NotLoop > 0)
     return;
 
   // This will send the request to the server
-  // client.println("shit...");
-  client.write("shit...");
+  client.write("shit...\n");
   Serial.println("Sent sth");
 
-  int readLength = 0;
-  while (readLength = client.available(), readLength == 0) {}  // wait for server's resp
-  Serial.printf("read bytes available=%d\r\n", readLength);
+  client.setTimeout(5 * 1000);
 
-  char readData[1024];
-  // client.readBytesUntil('\n', readData, 8);  // // block with timeout. In some test tool, they don't send newline char...? So it needs to wait the \n for about several sec (may not be 1s described in doc)
-  client.read(readData, readLength);
-  readData[readLength] = 0;
-  Serial.println(readData);
-
-  // String line = client.readString();  // block with timeout
-  // String line = client.readStringUntil('\n');  // block with timeout
-  // Serial.println(line);
+  // char line[512];
+  // read api: In some test tool, they don't send newline char...
+  // wifiClient_WaitReadCstr(line);  // my test api...
+  // client.available();  // available return is relevant to \0, \n or tcp timeout.
+  // client.read(line, 8);  // no block
+  // client.readBytes(line, 8);  // block with getting length bytes or timeout
+  // client.readBytesUntil('\n', line, 8);  // block with timeout.
+  // String line = client.readString();  // always return with timeout, without getting \0...
+  String line = client.readStringUntil('\n');  // block with getting \n or timeout，without getting \0. If there's \0 before \n, it blocks with timeout...
+  Serial.println(line);
 
   // Read all the lines of the reply from server and print them to Serial
-  // bool bGotResp = false;
+  // String resp;
   // while (client.available()) {
-  //   if (!bGotResp) {
-  //     Serial.println("Got server's Resp:");
-  //     bGotResp = true;
-  //   }
+  //   resp += client.readStringUntil('\n');
+  // }
+  // if (resp.isEmpty()) {
+  //   Serial.println("Got server's Resp:");
+  //   Serial.println(resp);
+  // } else {
+  //   Serial.println("Got server's Resp:");
+  // }
 
   Serial.println("closing connection");
   client.stop();

@@ -147,7 +147,7 @@ void calculateOdometry() {
 void ctrlSpeed() {
   // int vert = (analogRead(Joystick_Vert_Pin));
   // int horz = (analogRead(Joystick_Horz_Pin));
-  int vert = map(analogRead(joystick_Vert_Pin), 0, 4095, -255, 255);  // map to foreward speed
+  int vert = map(analogRead(joystick_Vert_Pin), 0, 4095, -255, 255);  // map to forward speed
   int horz = map(analogRead(joystick_Horz_Pin), 0, 4095, -125, 125);  // map to rotate speed, not turn speed
 
   if (horz == 0) {
