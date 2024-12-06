@@ -15,6 +15,13 @@ const int port = 2020;
 int NotLoop = 0;
 WiFiClient client;
 
+// mcu input pins for joystick
+const int joystick_Vert_Pin = 36;
+const int joystick_Horz_Pin = 39;
+// zero-offset
+int joystick_vert_zo = INT_MAX;
+int joystick_horz_zo = INT_MAX;
+
 void setup() {
   Serial.begin(115200);
   Serial.println();
@@ -52,13 +59,12 @@ void setup() {
 
   Serial.println("server connected");
   Serial.println();
+
+  joystick_vert_zo = analogRead(joystick_Vert_Pin);
+  joystick_horz_zo = analogRead(joystick_Horz_Pin);
 }
 
-// mcu input pins for joystick
-const int joystick_Vert_Pin = 36;
-const int joystick_Horz_Pin = 39;
-
-void stopLoop(char * msg) {
+void stopLoop(const char * msg) {
   NotLoop++;
   Serial.println(msg);
   Serial.println("closing connection");
@@ -69,6 +75,7 @@ void setMotorSpeed(float speed1, float speed2)
 {
   client.printf("ms,%.3f,%.3f\n", speed1, speed2);
   // client.flush();
+  return;
 
   char resp;
   int readLen = client.readBytesUntil('\n', &resp, 1);
@@ -76,7 +83,6 @@ void setMotorSpeed(float speed1, float speed2)
     stopLoop("Getting svr's resp timeout");
     return;
   }
-
   if (resp != '0') {
     stopLoop("Svr's resp err");
     return;
@@ -85,28 +91,56 @@ void setMotorSpeed(float speed1, float speed2)
 
 int vert_b = 0;
 int horz_b = 0;
-void ctrlSpeed() {
-  // int vert = (analogRead(Joystick_Vert_Pin));
-  // int horz = (analogRead(Joystick_Horz_Pin));
-  int vert = map(analogRead(joystick_Vert_Pin), 0, 4095, -255, 255);  // map to forward speed
-  int horz = map(analogRead(joystick_Horz_Pin), 0, 4095, -125, 125);  // map to rotate speed, not turn speed
 
-  if (vert_b == vert && horz_b == horz)
+// for measuring vibratingValue
+int vMin = 0;
+int vMax = 0;
+int hMin = 0;
+int hMax = 0;
+
+void ctrlSpeed() {
+  delay(500);
+  int vert = analogRead(joystick_Vert_Pin);
+  int horz = analogRead(joystick_Horz_Pin);
+  vert = vert - joystick_vert_zo;
+  horz = horz - joystick_horz_zo;
+
+  // if (vert < vMin) vMin = vert;
+  // if (vert > vMax) vMax = vert;
+  // if (horz < hMin) hMin = horz;
+  // if (horz > hMax) hMax = horz;
+
+  const int vibratingValue = 100;
+  if (abs(vert_b - vert) <= vibratingValue && abs(horz_b - horz) <= vibratingValue)
     return;
   vert_b = vert;
   horz_b = horz;
 
+  // boundary deal
+  if (abs(vert - 0)     <= vibratingValue * 2) vert = 0;
+  if (abs(vert - 2048)  <= vibratingValue * 2) vert = 2048;
+  if (abs(vert - -2048) <= vibratingValue * 2) vert = -2048;  // use -2048 instead of -2047 to avoid zero mapping to +-1 below
+  if (abs(horz - 0)     <= vibratingValue * 2) horz = 0;
+  if (abs(horz - 2048)  <= vibratingValue * 2) horz = 2048;
+  if (abs(horz - -2048) <= vibratingValue * 2) horz = -2048;
+
+  // client.printf("ms\t%d\t%d\t%d\t%d\t%d\t%d\n", vert, horz, vMin, vMax, hMin, hMax);
+  // return;
+
+  vert = map(vert, -2048, 2048, -255, 255);  // map to forward speed
+  horz = map(horz, -2048, 2048, -100, 100);  // map to rotate speed, not turn speed
+
   if (horz == 0) {
     setMotorSpeed(vert, vert);
-  } else if (horz > 0) {    // left
+  } else if (horz < 0) {    // left
     if (vert == 0) {
-      setMotorSpeed(-horz, horz);  // use rotate speed
+      setMotorSpeed(horz, -horz);  // counter-clockwise: speed1 < 0 and speed2 > 0
     } else {
       setMotorSpeed(vert/2, vert);   // use different vertical speed on two wheel to make sure for turn
     }
-  } else {    // horz < 0    // right
+  } else {  // horz > 0  // right
     if (vert == 0) {
-      setMotorSpeed(-horz, horz);
+      setMotorSpeed(horz, -horz);  // clockwise: speed1 > 0 and speed2 < 0
     } else {
       setMotorSpeed(vert, vert/2);
     }
