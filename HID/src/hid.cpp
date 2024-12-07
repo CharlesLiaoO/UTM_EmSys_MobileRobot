@@ -82,7 +82,7 @@ void setup() {
   joystick_horz_zo = analogRead(joystick_Horz_Pin);
 }
 
-void setMotorSpeed(float speed1, float speed2)
+void sendMotorSpeed(float speed1, float speed2)
 {
   char cmdArgs[512];
   sprintf(cmdArgs, "%s,%.3f,%.3f\n", "ms", speed1, speed2);
@@ -145,18 +145,18 @@ void ctrlSpeed() {
   horz = map(horz, -2048, 2048, -100, 100);  // map to rotate speed, not turn speed
 
   if (horz == 0) {
-    setMotorSpeed(vert, vert);
+    sendMotorSpeed(vert, vert);
   } else if (horz < 0) {    // left
     if (vert == 0) {
-      setMotorSpeed(horz, -horz);  // counter-clockwise: speed1 < 0 and speed2 > 0
+      sendMotorSpeed(horz, -horz);  // counter-clockwise: speed1 < 0 and speed2 > 0
     } else {
-      setMotorSpeed(vert/2, vert);   // use different vertical speed on two wheel to make sure for turn
+      sendMotorSpeed(vert/2, vert);   // use different vertical speed on two wheel to make sure for turn
     }
   } else {  // horz > 0  // right
     if (vert == 0) {
-      setMotorSpeed(horz, -horz);  // clockwise: speed1 > 0 and speed2 < 0
+      sendMotorSpeed(horz, -horz);  // clockwise: speed1 > 0 and speed2 < 0
     } else {
-      setMotorSpeed(vert, vert/2);
+      sendMotorSpeed(vert, vert/2);
     }
   }
 }
