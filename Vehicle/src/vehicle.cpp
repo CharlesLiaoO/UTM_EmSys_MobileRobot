@@ -1,23 +1,25 @@
 #include <Arduino.h>
 // #include <string.h>
+#include <ESP8266WiFi.h>
 
-// mcu input pins for joystick
-const int joystick_Vert_Pin = 36;
-const int joystick_Horz_Pin = 39;
+// WIFI AP
+const char* ssid = "lch-EmSys_Vehicle";
+const char* password = "lch12321";
+const int port = 2020;
 
 // mcu output pins to motor driver input
-const int motor1_In1 = 19;
+const int motor1_In1 = 16;
 const int motor1_In2 = 5;
-const int motor1_PWM = 18;
-const int motor2_In1 = 4;
-const int motor2_In2 = 17;
-const int motor2_PWM = 16;
+const int motor1_PWM = 4;
+const int motor2_In1 = 0;
+const int motor2_In2 = 2;
+const int motor2_PWM = 14;
 
 // mcu input pins for motor's encoder
-const int encoder1_C = 2;
-const int encoder1_D = 15;
-const int encoder2_C = 8;
-const int encoder2_D = 7;
+const int encoder1_C = 12;
+const int encoder1_D = 13;
+const int encoder2_C = 15;  // cannot use 3 and 1. Maybe GPIO1 is used fro other function by default...
+const int encoder2_D = 3;
 
 // Variables for velocity, position
 int encoder1_Count = 0;
@@ -144,37 +146,28 @@ void calculateOdometry() {
   Serial.printf("%.3fs -- Vel: lin=%.3f, ang=%.3f; Pos: x, y, h = %.3f, %.3f, %.3f\r\n", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
 }
 
-void ctrlSpeed() {
-  // int vert = (analogRead(Joystick_Vert_Pin));
-  // int horz = (analogRead(Joystick_Horz_Pin));
-  int vert = map(analogRead(joystick_Vert_Pin), 0, 4095, -255, 255);  // map to forward speed
-  int horz = map(analogRead(joystick_Horz_Pin), 0, 4095, -125, 125);  // map to rotate speed, not turn speed
+WiFiServer server(2020);
 
-  if (horz == 0) {
-    setMotorSpeed(1, vert);
-    setMotorSpeed(2, vert);
-  } else if (horz > 0) {    // left
-    if (vert == 0) {
-      setMotorSpeed(1, -horz);  // use rotate speed
-      setMotorSpeed(2, horz);
-    } else {
-      setMotorSpeed(1, vert/2);   // use different vertical speed on two wheel to make sure for turn
-      setMotorSpeed(2, vert);
-    }
-  } else {    // horz < 0    // right
-    if (vert == 0) {
-      setMotorSpeed(1, -horz);
-      setMotorSpeed(2, horz);
-    } else {
-      setMotorSpeed(1, vert);
-      setMotorSpeed(2, vert/2);
-    }
-  }
+bool bStopLoop = false;
+
+void stopLoop(const char * msg=0) {
+  bStopLoop = true;
+  if (!msg)
+    Serial.println(msg);
+  Serial.println("Stop Loop");
 }
 
 void setup() {
-  pinMode(joystick_Vert_Pin, INPUT);
-  pinMode(joystick_Horz_Pin, INPUT);
+  Serial.begin(115200); // For debugging output
+  Serial.println();
+  Serial.println("---- setup ----");
+
+  // Remove the password parameter, if you want the AP (Access Point) to be open
+  WiFi.softAP(ssid, password);
+  Serial.print("AP IP address: ");
+  Serial.println(WiFi.softAPIP());
+
+  server.begin();
 
   // Motor pins setup
   pinMode(motor1_In1, OUTPUT);
@@ -187,22 +180,77 @@ void setup() {
   pinMode(encoder1_D, INPUT);
   pinMode(encoder2_C, INPUT);
   pinMode(encoder2_D, INPUT);
+  // Serial.println("---- finished here ----");
+  // return;
   attachInterrupt(digitalPinToInterrupt(encoder1_C), encoder1_ISR, FALLING);    //RISING
   attachInterrupt(digitalPinToInterrupt(encoder2_C), encoder2_ISR, FALLING);
 
-  // ledcAttachPin(motor1_PWM, ch);  only ok in PlatformIO environment
-  // ledcAttach()  only ok in websit Wokwi
-
-  Serial.begin(115200); // For debugging output
-  prevTime = millis();    // Initialize time
-
   Serial.println("---- setup finished ----");
+
+  prevTime = millis();    // Initialize time
 };
 
+void DealClientData(WiFiClient *socket) {
+  // char cmdArgs[512];
+  // client.readBytesUntil('\n', cmdArgs, 512);
+  String cmdArgs = socket->readStringUntil('\n');
+  char cmd[512];
+  float speed1, speed2;
+  int matched = sscanf(cmdArgs.c_str(), "%2s,%f,%f", cmd, &speed1, &speed2);  //%s needs specify the width...
+  if (matched != 3) {
+    Serial.printf("cmdArgs parse failed, cmdArgs=%s, matched=%d\n", cmdArgs.c_str(), matched);
+    stopLoop();
+    return;
+  } else {
+    Serial.printf("Received: %s,%.3f,%.3f\n", cmd, speed1, speed2);
+  }
+}
+
+WiFiClient *socket = nullptr;
+void MultiClientProcess() {
+  if (!socket) {
+    *socket = server.accept();
+    if (socket->connected()) {
+      Serial.println("Connect to client OK");
+    } else {
+      socket->stop();
+      socket = nullptr;
+      Serial.println("Connect to client failed");
+    }
+  }
+
+  if (socket && socket->connected()) {
+    // Serial.println("Connected to client");
+  } else {
+      socket->stop();
+      socket = nullptr;
+      Serial.println("Disconnected");
+  }
+
+  if (socket && socket->available()) {
+    DealClientData(socket);
+  }
+}
+
 void loop() {
-  ctrlSpeed();
+  if (bStopLoop) {
+    return;
+    // while(1);
+  }
 
-  calculateOdometry();
+  WiFiClient client = server.accept();  // listen for incoming clients
+  if (client) {  // if you get a client,
+    Serial.println("New Client");
+    while (client.connected()) {  // loop while the client's connected
+      if (client.available()) { // read data available
+        DealClientData(&client);
+      }
+    }
+    client.stop();  // if client is disconnected, stop client
+    Serial.println("Client Disconnected");
+  }
 
-  delay(100); // Adjust for desired loop rate
+  // ctrlSpeed();
+
+  // calculateOdometry();
 }

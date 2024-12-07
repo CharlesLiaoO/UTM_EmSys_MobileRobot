@@ -2,9 +2,13 @@
 // #include <string.h>
 #include <WIFI.h>
 
-const char* ssid = "R1216_2.4GHz";
-const char* password = "r121612321";
-const char* host = "192.168.1.6";
+const char* ssid = "lch-EmSys_Vehicle";
+const char* password = "lch12321";
+const char* host = "192.168.4.1";
+
+// const char* ssid = "R1216_2.4GHz";
+// const char* password = "r121612321";
+// const char* host = "192.168.1.6";
 // const char* host = "lch-dell";  // cannot use name in my network?
 
 // const char* ssid = "LCH-DELL";
@@ -13,7 +17,7 @@ const char* host = "192.168.1.6";
 
 const int port = 2020;
 
-int NotLoop = 0;
+bool bStopLoop = false;
 WiFiClient client;
 
 // mcu input pins for joystick
@@ -22,6 +26,18 @@ const int joystick_Horz_Pin = 39;
 // zero-offset
 int joystick_vert_zo = INT_MAX;
 int joystick_horz_zo = INT_MAX;
+
+void stopLoop(const char * msg=0) {
+  bStopLoop = true;
+  if (!msg)
+    Serial.println(msg);
+  Serial.println("Stop Loop");
+
+  if (client.connected()) {
+    Serial.println("closing connection");
+    client.stop();
+  }
+}
 
 void setup() {
   Serial.begin(115200);
@@ -38,8 +54,7 @@ void setup() {
     Serial.print(".");
     connect_time += 500;
     if (connect_time > 10000) {
-      Serial.println("WiFi connect failed, timeout");
-      NotLoop++;
+      stopLoop("WiFi connect failed, timeout");
       return;
     }
   }
@@ -56,8 +71,7 @@ void setup() {
   Serial.println(host);
 
   if (!client.connect(host, port)) {
-    Serial.println("connection failed");
-    ++NotLoop;
+    stopLoop("connection failed");
     return;
   }
 
@@ -68,16 +82,12 @@ void setup() {
   joystick_horz_zo = analogRead(joystick_Horz_Pin);
 }
 
-void stopLoop(const char * msg) {
-  NotLoop++;
-  Serial.println(msg);
-  Serial.println("closing connection");
-  client.stop();
-}
-
 void setMotorSpeed(float speed1, float speed2)
 {
-  client.printf("ms,%.3f,%.3f\n", speed1, speed2);
+  char cmdArgs[512];
+  sprintf(cmdArgs, "%s,%.3f,%.3f\n", "ms", speed1, speed2);
+  client.printf(cmdArgs);
+  Serial.printf("Sent: %s", cmdArgs);
   // client.flush();
   return;
 
@@ -152,7 +162,7 @@ void ctrlSpeed() {
 }
 
 void loop() {
-  if (NotLoop > 0) {
+  if (bStopLoop) {
     return;
     // while(1);
   }
