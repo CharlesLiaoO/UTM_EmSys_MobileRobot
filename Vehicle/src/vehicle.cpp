@@ -2,10 +2,11 @@
 // #include <string.h>
 #include <ESP8266WiFi.h>
 
-// WIFI AP
+// WIFI AP & tcp server
 const char* ssid = "lch-EmSys_Vehicle";
 const char* password = "lch12321";
 const int port = 2020;
+WiFiServer server(port);
 
 // mcu output pins to motor driver input
 const int motor1_In1 = 16;
@@ -18,7 +19,7 @@ const int motor2_PWM = 14;
 // mcu input pins for motor's encoder
 const int encoder1_C = 12;
 const int encoder1_D = 13;
-const int encoder2_C = 15;  // cannot use 3 and 1. Maybe GPIO1 is used fro other function by default...
+const int encoder2_C = 15;  // cannot use 3 and 1. Maybe GPIO1 is used for other function by default...
 const int encoder2_D = 3;
 
 // Variables for velocity, position
@@ -42,7 +43,9 @@ double posY = 0;
 double heading = 90.0 * PI/180;  // robot's Heading angle in radian
 
 // Interrupt service routines for encoder counting
-const int encoder_dt = 10;  // use 1 in physical project
+float simBySpd_EncDt1 = 0;
+float simBySpd_EncDt2 = 0;
+const int encoder_dt = 1;  // sim: use 1 in physical project
 void IRAM_ATTR encoder1_ISR() {
   if (digitalRead(encoder1_D))
     encoder1_Count = encoder1_Count + encoder_dt;
@@ -58,45 +61,46 @@ void IRAM_ATTR encoder2_ISR() {
 }
 
 // Function to set motor direction and speed
+struct MotorPin {
+  int in_1_L;
+  int in_2_R;
+  int in_pwm;
+};
 void setMotorSpeed(int motor, float speed) {
+  float simBySpd_EncDt = speed / 255;
+  if (motor == 1)
+    simBySpd_EncDt1 = simBySpd_EncDt;
+  else
+    simBySpd_EncDt2 = simBySpd_EncDt;
+
   float pwmSpeed = abs(speed);
-  float simEncode = 10 * pwmSpeed / 255;
-  float simLedSpeed = pwmSpeed == 255 ? 255 : pwmSpeed * 0.1;
+  // pwmSpeed = pwmSpeed == 255 ? 255 : pwmSpeed * 0.1;  // for simulation decay
 
-  if (motor == 1) { // Motor 1
-    if (speed == 0) {
-      digitalWrite(motor1_In1, LOW);
-      digitalWrite(motor1_In2, LOW);
-    } else if (speed > 0) {
-      digitalWrite(motor1_In1, HIGH);
-      digitalWrite(motor1_In2, LOW);
-      encoder1_Count += simEncode;
-    } else {
-      digitalWrite(motor1_In1, LOW);
-      digitalWrite(motor1_In2, HIGH);
-      encoder1_Count -= simEncode;
-    }
-    analogWrite(motor1_PWM, simLedSpeed);
+  static MotorPin motorPin[2] = {
+    {motor1_In1, motor1_In2, motor1_PWM},
+    {motor2_In1, motor2_In2, motor2_PWM},
+  };
+  int mi = motor - 1;  // motor index
 
-  } else if (motor == 2) { // Motor 2
-    if (speed == 0) {
-      digitalWrite(motor2_In1, LOW);
-      digitalWrite(motor2_In2, LOW);
-    } else if (speed > 0) {
-      digitalWrite(motor2_In1, HIGH);
-      digitalWrite(motor2_In2, LOW);
-      encoder2_Count += simEncode;
-    } else {
-      digitalWrite(motor2_In1, LOW);
-      digitalWrite(motor2_In2, HIGH);
-      encoder2_Count -= simEncode;
-    }
-    analogWrite(motor2_PWM, simLedSpeed);
+  if (speed == 0) {
+    digitalWrite(motorPin[mi].in_1_L, LOW);
+    digitalWrite(motorPin[mi].in_2_R, LOW);
+  } else if (speed > 0) {
+    digitalWrite(motorPin[mi].in_1_L, HIGH);
+    digitalWrite(motorPin[mi].in_2_R, LOW);
+  } else {
+    digitalWrite(motorPin[mi].in_1_L, LOW);
+    digitalWrite(motorPin[mi].in_2_R, HIGH);
   }
+  analogWrite(motorPin[mi].in_pwm, pwmSpeed);
 }
 
 // Function to calculate velocity and position
 void calculateOdometry() {
+  encoder1_Count += simBySpd_EncDt1;  // for sim
+  encoder2_Count += simBySpd_EncDt2;
+
+  delay(1);  // must delay, otherwise the deltaTime could be zero
   // Calculate time elapsed
   unsigned long currentTime = millis();
   float deltaTime = (currentTime - prevTime) / 1000.0; // seconds
@@ -108,7 +112,7 @@ void calculateOdometry() {
   encoder2_Count_b = encoder2_Count;
 
   // Calculate wheel speeds (m/s)
-  static double distPerCount = (PI * wheelDiameter) / encoder_slots * 0.1 * 10;  // 0.1 gear rate, multiply 10 for quick demonstrating
+  static double distPerCount = (PI * wheelDiameter) / encoder_slots * 0.1 * 10;  // 0.1 gear rate, multiply 10 for quick demonstrating of sim
   double motorSpeed1 = (dt1 * distPerCount) / deltaTime;
   double motorSpeed2 = (dt2 * distPerCount) / deltaTime;
 
@@ -132,7 +136,7 @@ void calculateOdometry() {
   // Serial.printf("test newline\r\n");
   double linearVelocity_x = linearVelocity * cos(heading);  // cos/sin() is in radian!
   double linearVelocity_y = linearVelocity * sin(heading);
-  double heading_degP = heading * 180/PI;
+  // double heading_degP = heading * 180/PI;
   // Serial.printf("m1=%.3f, m2=%.3f, h=%.3f, vx=%.3f, vy=%.3f -- ", motorSpeed1, motorSpeed2, heading_degP, linearVelocity_x, linearVelocity_y);
   posX += linearVelocity_x * deltaTime;
   posY += linearVelocity_y * deltaTime;
@@ -146,10 +150,7 @@ void calculateOdometry() {
   Serial.printf("%.3fs -- Vel: lin=%.3f, ang=%.3f; Pos: x, y, h = %.3f, %.3f, %.3f\r\n", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
 }
 
-WiFiServer server(2020);
-
 bool bStopLoop = false;
-
 void stopLoop(const char * msg=0) {
   bStopLoop = true;
   if (!msg)
@@ -203,6 +204,8 @@ void DealClientData(WiFiClient *socket) {
     return;
   } else {
     Serial.printf("Received: %s,%.3f,%.3f\n", cmd, speed1, speed2);
+    setMotorSpeed(1, speed1);
+    setMotorSpeed(2, speed2);
   }
 }
 
@@ -245,12 +248,11 @@ void loop() {
       if (client.available()) { // read data available
         DealClientData(&client);
       }
+      calculateOdometry();
     }
     client.stop();  // if client is disconnected, stop client
     Serial.println("Client Disconnected");
   }
 
-  // ctrlSpeed();
-
-  // calculateOdometry();
+  calculateOdometry();
 }
