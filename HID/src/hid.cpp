@@ -4,7 +4,8 @@
 
 const char* ssid = "R1216_2.4GHz";
 const char* password = "r121612321";
-const char* host = "192.168.1.4";
+const char* host = "192.168.1.6";
+// const char* host = "lch-dell";  // cannot use name in my network?
 
 // const char* ssid = "LCH-DELL";
 // const char* password = "lch12345678";
@@ -46,6 +47,9 @@ void setup() {
   Serial.println();
   Serial.printf("WiFi connected with ");
   Serial.println(WiFi.localIP());
+  // Serial.println(WiFi.gatewayIP());
+  // Serial.println(WiFi.subnetMask());
+  // Serial.println(WiFi.dnsIP());
   Serial.println();
 
   Serial.print("connecting to robot server: ");
