@@ -19,8 +19,8 @@ const int motor2_PWM = 14;
 // mcu input pins for motor's encoder
 const int encoder1_C = 12;
 const int encoder1_D = 13;
-const int encoder2_C = 15;  // cannot use 3 and 1. Maybe GPIO1 is used for other function by default...
-const int encoder2_D = 3;
+const int encoder2_C = 15;  // cannot use 3 and 1. Maybe GPIO1/3 is used for serial or other function by default...
+const int encoder2_D = 9;
 
 // Variables for velocity, position
 int encoder1_Count = 0;
@@ -30,8 +30,11 @@ int encoder2_Count_b = 0;
 
 unsigned long prevTime = 0;      // To calculate elapsed time
 const int encoder_slots = 20;     // Number of slots in encoder disk
-const float wheelDiameter = 0.020;      // Wheel diameter in meter
+const float wheelDiameter = 0.020;      // Wheel diameter in meter  0.065
 const float wheelBase = 0.15;           // Distance between wheels in meter
+
+#include <PID.h>
+PID pid_motorSpeed[2];
 
 double linearVelocity = 0;
 double angularVelocity = 0;
@@ -67,7 +70,7 @@ struct MotorPin {
   int in_pwm;
 };
 void setMotorSpeed(int motor, float speed) {
-  float simBySpd_EncDt = speed / 255;
+  float simBySpd_EncDt = speed / 255 * 10;
   if (motor == 1)
     simBySpd_EncDt1 = simBySpd_EncDt;
   else
@@ -92,6 +95,11 @@ void setMotorSpeed(int motor, float speed) {
     digitalWrite(motorPin[mi].in_1_L, LOW);
     digitalWrite(motorPin[mi].in_2_R, HIGH);
   }
+
+  const int pwmSpeedMax = 255;
+  pid_motorSpeed[mi].target = 1.0 * pwmSpeed / pwmSpeedMax;  // set target: 1m/s max
+  pwmSpeed = pid_motorSpeed[mi].CalOutput_Pos();
+  Serial.printf("motor %d: pwmSpeed=%f\n", mi+1, pwmSpeed);
   analogWrite(motorPin[mi].in_pwm, pwmSpeed);
 }
 
@@ -100,7 +108,7 @@ void calculateOdometry() {
   encoder1_Count += simBySpd_EncDt1;  // for sim
   encoder2_Count += simBySpd_EncDt2;
 
-  delay(1);  // must delay, otherwise the deltaTime could be zero
+  delay(10);  // must delay, otherwise the deltaTime could be zero
   // Calculate time elapsed
   unsigned long currentTime = millis();
   float deltaTime = (currentTime - prevTime) / 1000.0; // seconds
@@ -113,12 +121,12 @@ void calculateOdometry() {
 
   // Calculate wheel speeds (m/s)
   static double distPerCount = (PI * wheelDiameter) / encoder_slots * 0.1 * 10;  // 0.1 gear rate, multiply 10 for quick demonstrating of sim
-  double motorSpeed1 = (dt1 * distPerCount) / deltaTime;
-  double motorSpeed2 = (dt2 * distPerCount) / deltaTime;
+  pid_motorSpeed[0].actual = (dt1 * distPerCount) / deltaTime;
+  pid_motorSpeed[1].actual = (dt2 * distPerCount) / deltaTime;
 
   // Calculate linear and angular velocity
-  linearVelocity = (motorSpeed1 + motorSpeed2) / 2;
-  angularVelocity = (motorSpeed2 - motorSpeed1) / wheelBase;
+  linearVelocity = (pid_motorSpeed[0].actual + pid_motorSpeed[1].actual) / 2;
+  angularVelocity = (pid_motorSpeed[1].actual - pid_motorSpeed[0].actual) / wheelBase;
 
   if (linearVelocity_b == linearVelocity && angularVelocity_b == angularVelocity) {
     return;
@@ -137,7 +145,7 @@ void calculateOdometry() {
   double linearVelocity_x = linearVelocity * cos(heading);  // cos/sin() is in radian!
   double linearVelocity_y = linearVelocity * sin(heading);
   // double heading_degP = heading * 180/PI;
-  // Serial.printf("m1=%.3f, m2=%.3f, h=%.3f, vx=%.3f, vy=%.3f -- ", motorSpeed1, motorSpeed2, heading_degP, linearVelocity_x, linearVelocity_y);
+  // Serial.printf("m1=%.3f, m2=%.3f, h=%.3f, vx=%.3f, vy=%.3f -- ", pid_motorSpeed[0].actual, pid_motorSpeed[1].actual, heading_degP, linearVelocity_x, linearVelocity_y);
   posX += linearVelocity_x * deltaTime;
   posY += linearVelocity_y * deltaTime;
 
@@ -148,6 +156,10 @@ void calculateOdometry() {
 
   // Print speed, position
   Serial.printf("%.3fs -- Vel: lin=%.3f, ang=%.3f; Pos: x, y, h = %.3f, %.3f, %.3f\r\n", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
+
+  Serial.println(pid_motorSpeed[0].getPlotString("1"));
+  // Serial.println(pid_motorSpeed[1].getPlotString("2"));
+  // Serial.printf(">target_2:%f,actual_2:%f,output_2:%f\n", pid_motorSpeed[mi].target, pid_motorSpeed[mi].actual, pwmSpeed);
 }
 
 bool bStopLoop = false;
@@ -181,10 +193,11 @@ void setup() {
   pinMode(encoder1_D, INPUT);
   pinMode(encoder2_C, INPUT);
   pinMode(encoder2_D, INPUT);
-  // Serial.println("---- finished here ----");
-  // return;
   attachInterrupt(digitalPinToInterrupt(encoder1_C), encoder1_ISR, FALLING);    //RISING
   attachInterrupt(digitalPinToInterrupt(encoder2_C), encoder2_ISR, FALLING);
+
+  pid_motorSpeed[0].setPID(1, 1, 1, 255);
+  pid_motorSpeed[1].setPID(1, 1, 1, 255);
 
   Serial.println("---- setup finished ----");
 
@@ -192,8 +205,6 @@ void setup() {
 };
 
 void DealClientData(WiFiClient *socket) {
-  // char cmdArgs[512];
-  // client.readBytesUntil('\n', cmdArgs, 512);
   String cmdArgs = socket->readStringUntil('\n');
   char cmd[512];
   float speed1, speed2;
