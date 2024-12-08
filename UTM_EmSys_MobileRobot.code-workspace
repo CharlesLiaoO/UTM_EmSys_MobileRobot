@@ -8,15 +8,13 @@
 		}
 	],
 	"settings": {
+		// "?": "**/include/c++/**: "cpp" works well with "C_Cpp.autoAddFileAssociations": false,
 		"files.associations": {
 			"*.prg": "vb",
-			"*.ini": "ini",
-			"*.h": "cpp",
 			"README": "plaintext",
 			"*.ino": "cpp",
 			"*.json": "jsonc",
-			"istream": "cpp",
-			"ostream": "cpp"
+			"**/include/c++/**": "cpp",
 		}
 	}
 }
