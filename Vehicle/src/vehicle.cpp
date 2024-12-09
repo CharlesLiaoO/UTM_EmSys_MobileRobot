@@ -111,9 +111,9 @@ void setMotorSpeed(int motor, float speed) {
   }
 
   const int pwmSpeedMax = 255;
-  // pid_motorSpeed[mi].target = 1.0 * pwmSpeed / pwmSpeedMax;  // set target: 1m/s max
+  pid_motorSpeed[mi].target = 0.25 * pwmSpeed / pwmSpeedMax;  // set target: 1m/s max
   // pid_motorSpeed[mi].output = pwmSpeed;  // for no pid debug
-  // pwmSpeed = pid_motorSpeed[mi].CalOutput_Pos();
+  pwmSpeed = pid_motorSpeed[mi].CalOutput_Pos();
   Serial.printf("motor %d: pwmSpeed=%f\n", mi+1, pwmSpeed);
   analogWrite(motorPin[mi].in_pwm, pwmSpeed);
 }
@@ -174,7 +174,6 @@ void calculateOdometry() {
 
   Serial.println(pid_motorSpeed[0].getPlotString("1"));
   Serial.println(pid_motorSpeed[1].getPlotString("2"));
-  // Serial.printf(">target_2:%f,actual_2:%f,output_2:%f\n", pid_motorSpeed[mi].target, pid_motorSpeed[mi].actual, pwmSpeed);
 }
 
 bool bStopLoop = false;
@@ -211,8 +210,8 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(encoder1_C), encoder1_ISR, FALLING);    //RISING
   attachInterrupt(digitalPinToInterrupt(encoder2_C), encoder2_ISR, FALLING);
 
-  pid_motorSpeed[0].setPID(1, 0.1, 0.1, 255);
-  pid_motorSpeed[1].setPID(1, 0.1, 0.1, 255);
+  pid_motorSpeed[0].setPID(800, 0.1, 0.1, 255);
+  pid_motorSpeed[1].setPID(800, 0.1, 0.1, 255);
 
   Serial.println("---- setup finished ----");
 
