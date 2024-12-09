@@ -23,6 +23,7 @@ const int encoder1_C = 12;
 // const int encoder1_D = 13;
 const int encoder2_C = 13;  // cannot use 3 and 1. Maybe GPIO1/3 is used for serial or other function by default...
 // const int encoder2_D = 9;
+bool motor_dir[2];
 
 // Variables for velocity, position
 int encoder1_Count = 0;
@@ -52,7 +53,8 @@ float simBySpd_EncDt2 = 0;
 const int encoder_dt = 1;  // sim: use 1 in physical project
 void IRAM_ATTR encoder1_ISR() {
   // if (digitalRead(encoder1_D))
-  if (!digitalRead(motor1_In1)) {
+  // if (!digitalRead(motor1_In1)) {
+  if (motor_dir[0]) {
     encoder1_Count = encoder1_Count + encoder_dt;
     // Serial.println("1++");
   } else {
@@ -63,7 +65,8 @@ void IRAM_ATTR encoder1_ISR() {
 
 void IRAM_ATTR encoder2_ISR() {
   // if (digitalRead(encoder2_D))
-  if (!digitalRead(motor2_In1)) {
+  // if (!digitalRead(motor2_In1)) {
+  if (motor_dir[1]) {
     encoder2_Count = encoder2_Count + encoder_dt;
     // Serial.println("2++");
   } else {
@@ -100,9 +103,11 @@ void setMotorSpeed(int motor, float speed) {
   } else if (speed > 0) {
     digitalWrite(motorPin[mi].in_1_L, HIGH);
     digitalWrite(motorPin[mi].in_2_R, LOW);
+    motor_dir[mi] = true;
   } else {
     digitalWrite(motorPin[mi].in_1_L, LOW);
     digitalWrite(motorPin[mi].in_2_R, HIGH);
+    motor_dir[mi] = false;
   }
 
   const int pwmSpeedMax = 255;
