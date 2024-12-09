@@ -1,6 +1,8 @@
 #include <Arduino.h>
 // #include <string.h>
 #include <ESP8266WiFi.h>
+#include "PID.h"
+// #include "PID_v1.h"
 
 // WIFI AP & tcp server
 const char* ssid = "lch-EmSys_Vehicle";
@@ -12,15 +14,15 @@ WiFiServer server(port);
 const int motor1_In1 = 16;
 const int motor1_In2 = 5;
 const int motor1_PWM = 4;
-const int motor2_In1 = 0;
-const int motor2_In2 = 2;
+const int motor2_In1 = 2;
+const int motor2_In2 = 0;
 const int motor2_PWM = 14;
 
 // mcu input pins for motor's encoder
 const int encoder1_C = 12;
-const int encoder1_D = 13;
-const int encoder2_C = 15;  // cannot use 3 and 1. Maybe GPIO1/3 is used for serial or other function by default...
-const int encoder2_D = 9;
+// const int encoder1_D = 13;
+const int encoder2_C = 13;  // cannot use 3 and 1. Maybe GPIO1/3 is used for serial or other function by default...
+// const int encoder2_D = 9;
 
 // Variables for velocity, position
 int encoder1_Count = 0;
@@ -33,7 +35,6 @@ const int encoder_slots = 20;     // Number of slots in encoder disk
 const float wheelDiameter = 0.020;      // Wheel diameter in meter  0.065
 const float wheelBase = 0.15;           // Distance between wheels in meter
 
-#include <PID.h>
 PID pid_motorSpeed[2];
 
 double linearVelocity = 0;
@@ -50,17 +51,25 @@ float simBySpd_EncDt1 = 0;
 float simBySpd_EncDt2 = 0;
 const int encoder_dt = 1;  // sim: use 1 in physical project
 void IRAM_ATTR encoder1_ISR() {
-  if (digitalRead(encoder1_D))
+  // if (digitalRead(encoder1_D))
+  if (!digitalRead(motor1_In1)) {
     encoder1_Count = encoder1_Count + encoder_dt;
-  else
+    // Serial.println("1++");
+  } else {
     encoder1_Count = encoder1_Count - encoder_dt;
+    // Serial.println("1--");
+  }
 }
 
 void IRAM_ATTR encoder2_ISR() {
-  if (digitalRead(encoder2_D))
+  // if (digitalRead(encoder2_D))
+  if (!digitalRead(motor2_In1)) {
     encoder2_Count = encoder2_Count + encoder_dt;
-  else
+    // Serial.println("2++");
+  } else {
     encoder2_Count = encoder2_Count - encoder_dt;
+    // Serial.println("2--");
+  }
 }
 
 // Function to set motor direction and speed
@@ -70,11 +79,11 @@ struct MotorPin {
   int in_pwm;
 };
 void setMotorSpeed(int motor, float speed) {
-  float simBySpd_EncDt = speed / 255 * 10;
-  if (motor == 1)
-    simBySpd_EncDt1 = simBySpd_EncDt;
-  else
-    simBySpd_EncDt2 = simBySpd_EncDt;
+  // float simBySpd_EncDt = speed / 255 * 2;
+  // if (motor == 1)
+  //   simBySpd_EncDt1 = simBySpd_EncDt;
+  // else
+  //   simBySpd_EncDt2 = simBySpd_EncDt;
 
   float pwmSpeed = abs(speed);
   // pwmSpeed = pwmSpeed == 255 ? 255 : pwmSpeed * 0.1;  // for simulation decay
@@ -97,16 +106,17 @@ void setMotorSpeed(int motor, float speed) {
   }
 
   const int pwmSpeedMax = 255;
-  pid_motorSpeed[mi].target = 1.0 * pwmSpeed / pwmSpeedMax;  // set target: 1m/s max
-  pwmSpeed = pid_motorSpeed[mi].CalOutput_Pos();
+  // pid_motorSpeed[mi].target = 1.0 * pwmSpeed / pwmSpeedMax;  // set target: 1m/s max
+  // pid_motorSpeed[mi].output = pwmSpeed;  // for no pid debug
+  // pwmSpeed = pid_motorSpeed[mi].CalOutput_Pos();
   Serial.printf("motor %d: pwmSpeed=%f\n", mi+1, pwmSpeed);
   analogWrite(motorPin[mi].in_pwm, pwmSpeed);
 }
 
 // Function to calculate velocity and position
 void calculateOdometry() {
-  encoder1_Count += simBySpd_EncDt1;  // for sim
-  encoder2_Count += simBySpd_EncDt2;
+  // encoder1_Count += simBySpd_EncDt1;  // for sim
+  // encoder2_Count += simBySpd_EncDt2;
 
   delay(10);  // must delay, otherwise the deltaTime could be zero
   // Calculate time elapsed
@@ -190,18 +200,20 @@ void setup() {
 
   // Encoder pins setup
   pinMode(encoder1_C, INPUT);    // INPUT_PULLUP
-  pinMode(encoder1_D, INPUT);
+  // pinMode(encoder1_D, INPUT);
   pinMode(encoder2_C, INPUT);
-  pinMode(encoder2_D, INPUT);
+  // pinMode(encoder2_D, INPUT);
   attachInterrupt(digitalPinToInterrupt(encoder1_C), encoder1_ISR, FALLING);    //RISING
   attachInterrupt(digitalPinToInterrupt(encoder2_C), encoder2_ISR, FALLING);
 
-  pid_motorSpeed[0].setPID(1, 1, 1, 255);
-  pid_motorSpeed[1].setPID(1, 1, 1, 255);
+  pid_motorSpeed[0].setPID(1, 0.1, 0.1, 255);
+  pid_motorSpeed[1].setPID(1, 0.1, 0.1, 255);
 
   Serial.println("---- setup finished ----");
 
   prevTime = millis();    // Initialize time
+
+  // stopLoop();
 };
 
 void DealClientData(WiFiClient *socket) {
