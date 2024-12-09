@@ -32,7 +32,7 @@ int encoder2_Count_b = 0;
 
 unsigned long prevTime = 0;      // To calculate elapsed time
 const int encoder_slots = 20;     // Number of slots in encoder disk
-const float wheelDiameter = 0.020;      // Wheel diameter in meter  0.065
+const float wheelDiameter = 0.065;      // Wheel diameter in meter
 const float wheelBase = 0.15;           // Distance between wheels in meter
 
 PID pid_motorSpeed[2];
@@ -130,7 +130,7 @@ void calculateOdometry() {
   encoder2_Count_b = encoder2_Count;
 
   // Calculate wheel speeds (m/s)
-  static double distPerCount = (PI * wheelDiameter) / encoder_slots * 0.1 * 10;  // 0.1 gear rate, multiply 10 for quick demonstrating of sim
+  static double distPerCount = (PI * wheelDiameter) / encoder_slots;
   pid_motorSpeed[0].actual = (dt1 * distPerCount) / deltaTime;
   pid_motorSpeed[1].actual = (dt2 * distPerCount) / deltaTime;
 
