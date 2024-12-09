@@ -118,14 +118,14 @@ void calculateOdometry() {
   // encoder1_Count += simBySpd_EncDt1;  // for sim
   // encoder2_Count += simBySpd_EncDt2;
 
-  delay(10);  // must delay, otherwise the deltaTime could be zero
+  delay(100);  // must delay, otherwise the deltaTime could be zero
   // Calculate time elapsed
   unsigned long currentTime = millis();
   float deltaTime = (currentTime - prevTime) / 1000.0; // seconds
   prevTime = currentTime;
 
-  double dt1 = encoder1_Count - encoder1_Count_b;
-  double dt2 = encoder2_Count - encoder2_Count_b;
+  int dt1 = encoder1_Count - encoder1_Count_b;
+  int dt2 = encoder2_Count - encoder2_Count_b;
   encoder1_Count_b = encoder1_Count;
   encoder2_Count_b = encoder2_Count;
 
@@ -168,7 +168,7 @@ void calculateOdometry() {
   Serial.printf("%.3fs -- Vel: lin=%.3f, ang=%.3f; Pos: x, y, h = %.3f, %.3f, %.3f\r\n", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
 
   Serial.println(pid_motorSpeed[0].getPlotString("1"));
-  // Serial.println(pid_motorSpeed[1].getPlotString("2"));
+  Serial.println(pid_motorSpeed[1].getPlotString("2"));
   // Serial.printf(">target_2:%f,actual_2:%f,output_2:%f\n", pid_motorSpeed[mi].target, pid_motorSpeed[mi].actual, pwmSpeed);
 }
 
