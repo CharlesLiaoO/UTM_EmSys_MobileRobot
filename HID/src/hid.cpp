@@ -23,13 +23,15 @@ WiFiClient client;
 // mcu input pins for joystick
 const int joystick_Vert_Pin = 36;
 const int joystick_Horz_Pin = 39;
+// const int reboot_InPin = 34;
+
 // zero-offset
 int joystick_vert_zo = INT_MAX;
 int joystick_horz_zo = INT_MAX;
 
 void stopLoop(const char * msg=0) {
   bStopLoop = true;
-  if (!msg)
+  if (msg)
     Serial.println(msg);
   Serial.println("Stop Loop");
 
@@ -39,10 +41,25 @@ void stopLoop(const char * msg=0) {
   }
 }
 
+void softReboot() {
+  Serial.println("---- Reboot ----");
+  ESP.restart();
+}
+
 void setup() {
   Serial.begin(115200);
   Serial.println();
   Serial.println("---- setup ----");
+
+  pinMode(joystick_Vert_Pin, INPUT);
+  pinMode(joystick_Horz_Pin, INPUT);
+  joystick_vert_zo = analogRead(joystick_Vert_Pin);
+  joystick_horz_zo = analogRead(joystick_Horz_Pin);
+
+  // pinMode(reboot_InPin, INPUT);
+  // Serial.printf("reboot_InPin=%d\n", digitalRead(reboot_InPin));
+  // attachInterrupt(digitalPinToInterrupt(reboot_InPin), softReboot, FALLING);    //RISING
+
 
   // We start by connecting to a WiFi network
   Serial.printf("Connecting to %s\r\n", ssid);
@@ -77,9 +94,6 @@ void setup() {
 
   Serial.println("server connected");
   Serial.println();
-
-  joystick_vert_zo = analogRead(joystick_Vert_Pin);
-  joystick_horz_zo = analogRead(joystick_Horz_Pin);
 }
 
 void sendMotorSpeed(float speed1, float speed2)
@@ -142,7 +156,7 @@ void ctrlSpeed() {
   // return;
 
   vert = map(vert, -2048, 2048, -255, 255);  // map to forward speed
-  horz = map(horz, -2048, 2048, -100, 100);  // map to rotate speed, not turn speed
+  horz = map(horz, -2048, 2048, -200, 200);  // map to rotate speed, not turn speed
 
   if (horz == 0) {
     sendMotorSpeed(vert, vert);
