@@ -11,17 +11,22 @@ const int port = 2020;
 WiFiServer server(port);
 
 // mcu output pins to motor driver input
+// 8266 NodeMCU V3: GPIO 14: HSCLK: pulse at moment after boot..
+//    gpio02: connect to blue led
+// the following pin define seems to be the only-working one...
 const int motor1_In1 = 16;
-const int motor1_In2 = 5;
-const int motor1_PWM = 4;
-const int motor2_In1 = 2;
-const int motor2_In2 = 0;
-const int motor2_PWM = 14;
+const int motor1_In2 = 0;
+const int motor2_In1 = 13;
+const int motor2_In2 = 15;
+// best not to set in pre-defined pin
+const int motor1_PWM = 5;
+const int motor2_PWM = 4;
 
 // mcu input pins for motor's encoder
-const int encoder1_C = 12;
+const int encoder1_C = 14;
 // const int encoder1_D = 13;
-const int encoder2_C = 13;  // cannot use 3 and 1. Maybe GPIO1/3 is used for serial or other function by default...
+// cannot use 3 and 1. Maybe GPIO1/3 is used for serial or other function by default...
+const int encoder2_C = 12;
 // const int encoder2_D = 9;
 bool motor_dir[2];
 
@@ -199,8 +204,10 @@ void setup() {
   // Motor pins setup
   pinMode(motor1_In1, OUTPUT);
   pinMode(motor1_In2, OUTPUT);
+  pinMode(motor1_PWM, OUTPUT);
   pinMode(motor2_In1, OUTPUT);
   pinMode(motor2_In2, OUTPUT);
+  pinMode(motor2_PWM, OUTPUT);
 
   // Encoder pins setup
   pinMode(encoder1_C, INPUT);    // INPUT_PULLUP
