@@ -55,9 +55,15 @@ public:
     //     String ret(tmp);
     //     return ret;
     // }
+
+    String getPlotString(int prefix) {
+        char tmp[64];
+        itoa(prefix, tmp, 10);
+        return getPlotString(tmp);
+    }
     String getPlotString(const char *prefix) {
         char tmp[512];
-        sprintf(tmp, ">\1_target:%f,\1_actual:%f,\1_output:%f", target, actual, output);  // > Fomart in VSCode Extension Serial Plotter: cannot '-' as var Name
+        sprintf(tmp, ">\1_target:%f,\1_actual:%f,\1_output:%f", target, actual, output);  // > Format in VSCode Extension Serial Plotter: cannot '-' as var Name
         // sprintf(tmp, "\1-target:%f,\1-actual:%f,\1-output:%f", target, actual, output);  // no > in Arduino IDE
         String ret(tmp);
         ret.replace("\1", prefix);

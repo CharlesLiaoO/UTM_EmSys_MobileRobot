@@ -87,6 +87,10 @@ struct MotorPin {
   int in_2_R;
   int in_pwm;
 };
+static MotorPin motorPin[2] = {
+  {motor1_In1, motor1_In2, motor1_PWM},
+  {motor2_In1, motor2_In2, motor2_PWM},
+};
 void setMotorSpeed(int motor, float speed) {
   // float simBySpd_EncDt = speed / 255 * 2;
   // if (motor == 1)
@@ -94,13 +98,9 @@ void setMotorSpeed(int motor, float speed) {
   // else
   //   simBySpd_EncDt2 = simBySpd_EncDt;
 
-  float pwmSpeed = abs(speed);
-  // pwmSpeed = pwmSpeed == 255 ? 255 : pwmSpeed * 0.1;  // for simulation decay
+  int pwm = abs(speed);
+  // pwm = (pwm == 255 ? 255 : pwm * 0.1);  // for simulation decay
 
-  static MotorPin motorPin[2] = {
-    {motor1_In1, motor1_In2, motor1_PWM},
-    {motor2_In1, motor2_In2, motor2_PWM},
-  };
   int mi = motor - 1;  // motor index
 
   if (speed == 0) {
@@ -116,12 +116,22 @@ void setMotorSpeed(int motor, float speed) {
     motor_dir[mi] = false;
   }
 
-  const int pwmSpeedMax = 255;
-  pid_motorSpeed[mi].target = motorSpeedMax * pwmSpeed / pwmSpeedMax;
-  // pid_motorSpeed[mi].output = pwmSpeed;  // for no pid debug
-  pwmSpeed = pid_motorSpeed[mi].CalOutput_Pos();
-  Serial.printf("motor %d: pwmSpeed=%f\n", mi+1, pwmSpeed);
-  analogWrite(motorPin[mi].in_pwm, pwmSpeed);
+  const int pwmMax = 255;
+  pid_motorSpeed[mi].target = motorSpeedMax * pwm / pwmMax;
+}
+
+int pwm_bf[2] = {
+  0, 0
+};
+void appMotorSpeed() {
+  for (int mi=0; mi<2; mi++) {
+    int pwm = pid_motorSpeed[mi].CalOutput_Pos();
+    if (pwm_bf[mi] == pwm)
+      return;
+    pwm_bf[mi] = pwm;
+    analogWrite(motorPin[mi].in_pwm, pwm);
+    Serial.println(pid_motorSpeed[mi].getPlotString(mi+1));
+  }
 }
 
 // Function to calculate velocity and position
@@ -286,11 +296,13 @@ void loop() {
       if (client.available()) { // read data available
         DealClientData(&client);
       }
+      appMotorSpeed();
       calculateOdometry();
     }
     client.stop();  // if client is disconnected, stop client
     Serial.println("Client Disconnected");
   }
 
+  appMotorSpeed();
   calculateOdometry();
 }
