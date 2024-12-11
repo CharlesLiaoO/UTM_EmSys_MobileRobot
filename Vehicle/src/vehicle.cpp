@@ -185,7 +185,7 @@ void calculateOdometry() {
 bool bStopLoop = false;
 void stopLoop(const char * msg=0) {
   bStopLoop = true;
-  if (!msg)
+  if (msg)
     Serial.println(msg);
   Serial.println("Stop Loop");
 }
