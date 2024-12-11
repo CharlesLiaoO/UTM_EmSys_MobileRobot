@@ -41,6 +41,7 @@ const int encoder_slots = 20;     // Number of slots in encoder disk
 const float wheelDiameter = 0.065;      // Wheel diameter in meter
 const float wheelBase = 0.15;           // Distance between wheels in meter
 
+float motorSpeedMax;
 PID pid_motorSpeed[2];
 
 double linearVelocity = 0;
@@ -116,7 +117,7 @@ void setMotorSpeed(int motor, float speed) {
   }
 
   const int pwmSpeedMax = 255;
-  pid_motorSpeed[mi].target = 0.25 * pwmSpeed / pwmSpeedMax;  // set target: 1m/s max
+  pid_motorSpeed[mi].target = motorSpeedMax * pwmSpeed / pwmSpeedMax;
   // pid_motorSpeed[mi].output = pwmSpeed;  // for no pid debug
   pwmSpeed = pid_motorSpeed[mi].CalOutput_Pos();
   Serial.printf("motor %d: pwmSpeed=%f\n", mi+1, pwmSpeed);
@@ -128,7 +129,7 @@ void calculateOdometry() {
   // encoder1_Count += simBySpd_EncDt1;  // for sim
   // encoder2_Count += simBySpd_EncDt2;
 
-  delay(100);  // must delay, otherwise the deltaTime could be zero
+  delay(200);  // must delay, otherwise the deltaTime could be zero
   // Calculate time elapsed
   unsigned long currentTime = millis();
   float deltaTime = (currentTime - prevTime) / 1000.0; // seconds
@@ -217,8 +218,11 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(encoder1_C), encoder1_ISR, FALLING);    //RISING
   attachInterrupt(digitalPinToInterrupt(encoder2_C), encoder2_ISR, FALLING);
 
-  pid_motorSpeed[0].setPID(800, 0.1, 0.1, 255);
-  pid_motorSpeed[1].setPID(800, 0.1, 0.1, 255);
+  motorSpeedMax = 0.6;  // m/s, used as target speed
+  pid_motorSpeed[0].setPID(250, 1, 0.1);
+  pid_motorSpeed[1].setPID(250, 5, 0.1);
+  pid_motorSpeed[0].setLimit(0, 255);
+  pid_motorSpeed[1].setLimit(0, 255);
 
   Serial.println("---- setup finished ----");
 
