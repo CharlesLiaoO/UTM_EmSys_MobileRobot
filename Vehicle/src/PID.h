@@ -6,8 +6,9 @@ public:
     // 1. pars need to be set
     // 1.1 manually
     float Kp, Ki, Kd;
-    float output_max;
-    float integral_limit;
+    float output_min = FLT_MIN;
+    float output_max = FLT_MAX;
+    float integral_limit = FLT_MAX;
     // 1.2 automatically by program
     float target;
     float actual;
@@ -20,10 +21,13 @@ public:
     float error_last;
     float integral;
 
-    void setPID(float p, float i, float d, float output_max=FLT_MAX, float integral_limit=FLT_MAX) {
+    void setPID(float p, float i, float d) {
         Kp = p;
         Ki = i;
         Kd = d;
+    }
+    void setLimit(float output_min=FLT_MIN, float output_max=FLT_MAX, float integral_limit=FLT_MAX) {
+        this->output_min = output_min;
         this->output_max = output_max;
         this->integral_limit = integral_limit;
     }
@@ -39,6 +43,7 @@ public:
 
         output = Kp * error + Ki * integral + Kd * (error - error_last);
         if (output > output_max) output = output_max;
+        else if (output < output_min) output = output_min;
 
         error_last = error;
         return output;
@@ -52,8 +57,8 @@ public:
     // }
     String getPlotString(const char *prefix) {
         char tmp[512];
-        sprintf(tmp, ">\1-target:%f,\1-actual:%f,\1-output:%f", target, actual, output);  // Teleplot in VSCode
-        // sprintf(tmp, "\1-target:%f,\1-actual:%f,\1-output:%f", target, actual, output);  // Arduino IDE
+        sprintf(tmp, ">\1_target:%f,\1_actual:%f,\1_output:%f", target, actual, output);  // > Fomart in VSCode Extension Serial Plotter: cannot '-' as var Name
+        // sprintf(tmp, "\1-target:%f,\1-actual:%f,\1-output:%f", target, actual, output);  // no > in Arduino IDE
         String ret(tmp);
         ret.replace("\1", prefix);
         return ret;
