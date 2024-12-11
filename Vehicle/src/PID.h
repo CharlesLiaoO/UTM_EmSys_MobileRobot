@@ -69,4 +69,17 @@ public:
         ret.replace("\1", prefix);
         return ret;
     }
+
+    String getPlotString_teleplot(int prefix) {
+        char tmp[64];
+        itoa(prefix, tmp, 10);
+        return getPlotString_teleplot(tmp);
+    }
+    String getPlotString_teleplot(const char *prefix) {
+        char tmp[512];
+        sprintf(tmp, ">\1_target:%f\n>\1_actual:%f\n>\1_output:%f", target, actual, output);  // Format in VSCode Extension Serial teleplot
+        String ret(tmp);
+        ret.replace("\1", prefix);
+        return ret;
+    }
 };
