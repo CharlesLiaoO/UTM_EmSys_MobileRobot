@@ -23,7 +23,9 @@ WiFiClient client;
 // mcu input pins for joystick
 const int joystick_Vert_Pin = 36;
 const int joystick_Horz_Pin = 39;
-// const int reboot_InPin = 34;
+// https://docs.espressif.com/projects/esp-faq/en/latest/hardware-related/hardware-design.html#what-should-be-noted-when-i-configure-the-pins-of-esp32
+// GPIO34 cannot set a Pullup or Pulldown...
+const int reboot_InPin = 25;
 
 // zero-offset
 int joystick_vert_zo = INT_MAX;
@@ -56,9 +58,9 @@ void setup() {
   joystick_vert_zo = analogRead(joystick_Vert_Pin);
   joystick_horz_zo = analogRead(joystick_Horz_Pin);
 
-  // pinMode(reboot_InPin, INPUT);
+  pinMode(reboot_InPin, INPUT_PULLUP);
   // Serial.printf("reboot_InPin=%d\n", digitalRead(reboot_InPin));
-  // attachInterrupt(digitalPinToInterrupt(reboot_InPin), softReboot, FALLING);    //RISING
+  attachInterrupt(digitalPinToInterrupt(reboot_InPin), softReboot, FALLING);    //RISING
 
 
   // We start by connecting to a WiFi network
@@ -177,6 +179,7 @@ void ctrlSpeed() {
 
 void loop() {
   if (bStopLoop) {
+    delay(10);  // if don't add delay, ISR would cause reset! Why??
     return;
     // while(1);
   }
