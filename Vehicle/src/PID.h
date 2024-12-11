@@ -69,4 +69,17 @@ public:
         ret.replace("\1", prefix);
         return ret;
     }
+
+    String getTsvString(int prefix) {
+        char tmp[64];
+        itoa(prefix, tmp, 10);
+        return getTsvString(tmp);
+    }
+    String getTsvString(const char *prefix) {
+        char tmp[512];
+        sprintf(tmp, "\1%f\t%f\t%f", target, actual, output);  //first column is normal log msg
+        String ret(tmp);
+        ret.replace("\1", prefix);
+        return ret;
+    }
 };

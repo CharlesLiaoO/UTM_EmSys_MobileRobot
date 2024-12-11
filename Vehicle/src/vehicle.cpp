@@ -130,8 +130,8 @@ void appMotorSpeed() {
       return;
     pwm_bf[mi] = pwm;
     analogWrite(motorPin[mi].in_pwm, pwm);
-    Serial.println(pid_motorSpeed[0].getPlotString(mi+1));
-    Serial.println(pid_motorSpeed[1].getPlotString(mi+1));
+    Serial.print(pid_motorSpeed[0].getTsvString("\t"));
+    Serial.println(pid_motorSpeed[1].getTsvString("\t"));
   }
 }
 
@@ -189,8 +189,8 @@ void calculateOdometry() {
   // Print speed, position
   Serial.printf("%.3fs -- Vel: lin=%.3f, ang=%.3f; Pos: x, y, h = %.3f, %.3f, %.3f\r\n", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
 
-  Serial.println(pid_motorSpeed[0].getPlotString("1"));
-  Serial.println(pid_motorSpeed[1].getPlotString("2"));
+  Serial.print(pid_motorSpeed[0].getTsvString("\t"));
+  Serial.println(pid_motorSpeed[1].getTsvString("\t"));
 }
 
 bool bStopLoop = false;
