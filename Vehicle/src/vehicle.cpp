@@ -41,7 +41,7 @@ const int encoder_slots = 20;     // Number of slots in encoder disk
 const float wheelDiameter = 0.065;      // Wheel diameter in meter
 const float wheelBase = 0.15;           // Distance between wheels in meter
 
-bool usePid = false;
+bool usePid = true;
 float motorSpeedMax;
 PID pid_motorSpeed[2];
 
@@ -245,8 +245,8 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(encoder2_C), encoder2_ISR, FALLING);
 
   motorSpeedMax = 0.6;  // m/s, used as target speed.  full pwm -> 0.7
-  pid_motorSpeed[0].setPID(700, 300, 200);
-  pid_motorSpeed[1].setPID(700, 300, 200);
+  pid_motorSpeed[0].setPID(700, 20, 20);
+  pid_motorSpeed[1].setPID(700, 20, 20);
   pid_motorSpeed[0].setLimit(0, 255);
   pid_motorSpeed[1].setLimit(0, 255);
 
