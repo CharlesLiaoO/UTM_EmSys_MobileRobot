@@ -41,6 +41,7 @@ const int encoder_slots = 20;     // Number of slots in encoder disk
 const float wheelDiameter = 0.065;      // Wheel diameter in meter
 const float wheelBase = 0.15;           // Distance between wheels in meter
 
+bool usePid = false;
 float motorSpeedMax;
 PID pid_motorSpeed[2];
 
@@ -116,6 +117,11 @@ void setMotorSpeed(int motor, float speed) {
     motor_dir[mi] = false;
   }
 
+  if (!usePid) {
+    analogWrite(motorPin[mi].in_pwm, pwm);
+    return;
+  }
+
   const int pwmMax = 255;
   pid_motorSpeed[mi].target = motorSpeedMax * pwm / pwmMax;
 }
@@ -123,7 +129,10 @@ void setMotorSpeed(int motor, float speed) {
 int pwm_bf[2] = {
   0, 0
 };
-void appMotorSpeed() {
+void appPidMotorSpeed() {
+  if (!usePid)
+    return;
+
   for (int mi=0; mi<2; mi++) {
     int pwm = pid_motorSpeed[mi].CalOutput_Pos();
     if (pwm_bf[mi] == pwm)
@@ -191,6 +200,10 @@ void calculateOdometry() {
 
   Serial.println(pid_motorSpeed[0].getPlotString("1"));
   Serial.println(pid_motorSpeed[1].getPlotString("2"));
+
+  if (!usePid) {
+    return;
+  }
   Serial.println(pid_motorSpeed[0].getDataString_IE("1"));
   Serial.println(pid_motorSpeed[1].getDataString_IE("2"));
 }
@@ -302,13 +315,13 @@ void loop() {
       if (client.available()) { // read data available
         DealClientData(&client);
       }
-      appMotorSpeed();
+      appPidMotorSpeed();
       calculateOdometry();
     }
     client.stop();  // if client is disconnected, stop client
     Serial.println("Client Disconnected");
   }
 
-  appMotorSpeed();
+  appPidMotorSpeed();
   calculateOdometry();
 }
