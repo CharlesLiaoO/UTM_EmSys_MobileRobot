@@ -228,9 +228,9 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(encoder1_C), encoder1_ISR, FALLING);    //RISING
   attachInterrupt(digitalPinToInterrupt(encoder2_C), encoder2_ISR, FALLING);
 
-  motorSpeedMax = 0.6;  // m/s, used as target speed
-  pid_motorSpeed[0].setPID(250, 1, 0.1);
-  pid_motorSpeed[1].setPID(250, 5, 0.1);
+  motorSpeedMax = 0.6;  // m/s, used as target speed.  full pwm -> 0.7
+  pid_motorSpeed[0].setPID(700, 300, 200);
+  pid_motorSpeed[1].setPID(700, 300, 200);
   pid_motorSpeed[0].setLimit(0, 255);
   pid_motorSpeed[1].setLimit(0, 255);
 
@@ -238,6 +238,8 @@ void setup() {
 
   prevTime = millis();    // Initialize time
 
+  Serial.println(pid_motorSpeed[0].getPlotString("1"));  // print a set of zero for plot
+  Serial.println(pid_motorSpeed[1].getPlotString("2"));
   // stopLoop();
 };
 
@@ -285,6 +287,7 @@ void MultiClientProcess() {
 
 void loop() {
   if (bStopLoop) {
+    delay(10);
     return;
     // while(1);
   }
