@@ -65,12 +65,19 @@ public:
         char tmp[512];
         sprintf(tmp, ">\1_target:%f,\1_actual:%f,\1_output:%f", target, actual, output);  // > Format in VSCode Extension Serial Plotter: cannot '-' as var Name
         // sprintf(tmp, "\1-target:%f,\1-actual:%f,\1-output:%f", target, actual, output);  // no > in Arduino IDE
+        String ret(tmp);
+        ret.replace("\1", prefix);
+        return ret;
+    }
 
-        // append inner var for debug
-        // char tmp2[64];
-        // sprintf(tmp2, ",\1_integral:%f,\1_error_last:%f", integral, error_last);
-        // strcat(tmp, tmp2);
-
+    String getDataString_IE(int prefix) {
+        char tmp[64];
+        itoa(prefix, tmp, 10);
+        return getDataString_IE(tmp);
+    }
+    String getDataString_IE(const char *prefix) {
+        char tmp[512];
+        sprintf(tmp, "\1_integral:%f,\1_error_last:%f", integral, error_last);
         String ret(tmp);
         ret.replace("\1", prefix);
         return ret;

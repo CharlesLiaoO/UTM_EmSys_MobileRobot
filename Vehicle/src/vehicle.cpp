@@ -131,6 +131,7 @@ void appMotorSpeed() {
     pwm_bf[mi] = pwm;
     analogWrite(motorPin[mi].in_pwm, pwm);
     Serial.println(pid_motorSpeed[mi].getPlotString(mi+1));
+    Serial.println(pid_motorSpeed[mi].getDataString_IE(mi+1));
   }
 }
 
@@ -190,6 +191,8 @@ void calculateOdometry() {
 
   Serial.println(pid_motorSpeed[0].getPlotString("1"));
   Serial.println(pid_motorSpeed[1].getPlotString("2"));
+  Serial.println(pid_motorSpeed[0].getDataString_IE("1"));
+  Serial.println(pid_motorSpeed[1].getDataString_IE("2"));
 }
 
 bool bStopLoop = false;
