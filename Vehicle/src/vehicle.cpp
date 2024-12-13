@@ -41,7 +41,7 @@ const int encoder_slots = 20;     // Number of slots in encoder disk
 const float wheelDiameter = 0.065;      // Wheel diameter in meter
 const float wheelBase = 0.15;           // Distance between wheels in meter
 
-bool usePid = true;
+bool usePid = true;  //$
 float motorSpeedMax;
 PID pid_motorSpeed[2];
 
@@ -126,13 +126,19 @@ void setMotorSpeed(int motor, float speed) {
   pid_motorSpeed[mi].target = motorSpeedMax * pwm / pwmMax;
 }
 
-int pwm_bf[2] = {
-  0, 0
-};
 void appPidMotorSpeed() {
   if (!usePid)
     return;
 
+  static long time_bf = 0;
+  int time = millis();
+  if (time - time_bf < 50)  // $ pwm period
+    return;
+  time_bf = time;
+
+  static int pwm_bf[2] = {
+    0, 0
+  };
   for (int mi=0; mi<2; mi++) {
     int pwm = pid_motorSpeed[mi].CalOutput_Pos();
     if (pwm_bf[mi] == pwm)
@@ -140,16 +146,22 @@ void appPidMotorSpeed() {
     pwm_bf[mi] = pwm;
     analogWrite(motorPin[mi].in_pwm, pwm);
     Serial.println(pid_motorSpeed[mi].getPlotString(mi+1));
-    Serial.println(pid_motorSpeed[mi].getDataString_IE(mi+1));
+    // Serial.println(pid_motorSpeed[mi].getDataString_IE(mi+1));
   }
 }
 
 // Function to calculate velocity and position
 void calculateOdometry() {
+  // delay(200);
+  static long time_bf = 0;
+  int time = millis();
+  if (time - time_bf < 50)  // $ pos update period, must delay, otherwise the deltaTime could be zero
+    return;
+  time_bf = time;
+
   // encoder1_Count += simBySpd_EncDt1;  // for sim
   // encoder2_Count += simBySpd_EncDt2;
 
-  delay(200);  // must delay, otherwise the deltaTime could be zero
   // Calculate time elapsed
   unsigned long currentTime = millis();
   float deltaTime = (currentTime - prevTime) / 1000.0; // seconds
@@ -204,8 +216,8 @@ void calculateOdometry() {
   if (!usePid) {
     return;
   }
-  Serial.println(pid_motorSpeed[0].getDataString_IE("1"));
-  Serial.println(pid_motorSpeed[1].getDataString_IE("2"));
+  // Serial.println(pid_motorSpeed[0].getDataString_IE("1"));
+  // Serial.println(pid_motorSpeed[1].getDataString_IE("2"));
 }
 
 bool bStopLoop = false;
@@ -244,11 +256,11 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(encoder1_C), encoder1_ISR, FALLING);    //RISING
   attachInterrupt(digitalPinToInterrupt(encoder2_C), encoder2_ISR, FALLING);
 
-  motorSpeedMax = 0.6;  // m/s, used as target speed.  full pwm -> 0.7
-  pid_motorSpeed[0].setPID(700, 20, 20);
-  pid_motorSpeed[1].setPID(700, 20, 20);
-  pid_motorSpeed[0].setLimit(0, 255);
-  pid_motorSpeed[1].setLimit(0, 255);
+  motorSpeedMax = 0.6;  //$ m/s, used as target speed.  full pwm -> 0.7
+  pid_motorSpeed[0].setPID(300, 0, 0);  //$
+  pid_motorSpeed[1].setPID(300, 0, 0);
+  pid_motorSpeed[0].setLimit(50, 255);
+  pid_motorSpeed[1].setLimit(50, 255);
 
   Serial.println("---- setup finished ----");
 
