@@ -158,21 +158,22 @@ void ctrlSpeed() {
   // return;
 
   vert = map(vert, -2048, 2048, -255, 255);  // map to forward speed
-  horz = map(horz, -2048, 2048, -200, 200);  // map to rotate speed, not turn speed
+  horz = map(horz, -2048, 2048, -125, 125);  // map to rotate speed, not turn speed
 
+  const float turnDecay = 0.7;
   if (horz == 0) {
     sendMotorSpeed(vert, vert);
   } else if (horz < 0) {    // left
     if (vert == 0) {
       sendMotorSpeed(horz, -horz);  // counter-clockwise: speed1 < 0 and speed2 > 0
     } else {
-      sendMotorSpeed(vert/2, vert);   // use different vertical speed on two wheel to make sure for turn
+      sendMotorSpeed(vert * turnDecay, vert);   // use different vertical speed on two wheel to make sure for turn
     }
   } else {  // horz > 0  // right
     if (vert == 0) {
       sendMotorSpeed(horz, -horz);  // clockwise: speed1 > 0 and speed2 < 0
     } else {
-      sendMotorSpeed(vert, vert/2);
+      sendMotorSpeed(vert, vert * turnDecay);
     }
   }
 }

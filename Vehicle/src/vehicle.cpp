@@ -14,19 +14,22 @@ WiFiServer server(port);
 // 8266 NodeMCU V3: GPIO 14: HSCLK: pulse at moment after boot..
 //    gpio02: connect to blue led
 // the following pin define seems to be the only-working one...
-const int motor1_In1 = 16;
-const int motor1_In2 = 0;
-const int motor2_In1 = 13;
-const int motor2_In2 = 15;
+const int motor1_In1 = 16;  // D0 ok
+// const int motor1_In1 = 10;  // S3  cause reboot
+// const int motor1_In2 = 0;  // D3  cannot output 3.3V, only 2.4... why??
+const int motor1_In2 = 2;  // D4  on board blue led, ok
+// const int motor1_In2 = 9;  // S2  cause reboot
+const int motor2_In1 = 13;  // D7
+const int motor2_In2 = 15;  // D8
 // best not to set in pre-defined pin
-const int motor1_PWM = 5;
-const int motor2_PWM = 4;
+const int motor1_PWM = 5;  //D1
+const int motor2_PWM = 4;  //D2
 
 // mcu input pins for motor's encoder
-const int encoder1_C = 14;
+const int encoder1_C = 14;  //D5
 // const int encoder1_D = 13;
 // cannot use 3 and 1. Maybe GPIO1/3 is used for serial or other function by default...
-const int encoder2_C = 12;
+const int encoder2_C = 12;  //D6
 // const int encoder2_D = 9;
 bool motor_dir[2];
 
@@ -41,7 +44,7 @@ const int encoder_slots = 20;     // Number of slots in encoder disk
 const float wheelDiameter = 0.065;      // Wheel diameter in meter
 const float wheelBase = 0.15;           // Distance between wheels in meter
 
-bool usePid = true;
+bool usePid = false;
 float motorSpeedMax;
 PID pid_motorSpeed[2];
 
@@ -118,6 +121,8 @@ void setMotorSpeed(int motor, float speed) {
   }
 
   if (!usePid) {
+    if (mi == 0)
+      pwm = 0.96 * pwm;  // motor 1 is faster then 2 when they got same input
     analogWrite(motorPin[mi].in_pwm, pwm);
     return;
   }
