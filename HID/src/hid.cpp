@@ -129,7 +129,7 @@ int hMin = 0;
 int hMax = 0;
 
 void ctrlSpeed() {
-  delay(500);
+  delay(10);
   int vert = analogRead(joystick_Vert_Pin);
   int horz = analogRead(joystick_Horz_Pin);
   vert = vert - joystick_vert_zo;
