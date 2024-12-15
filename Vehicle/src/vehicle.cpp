@@ -1,6 +1,6 @@
 #include <Arduino.h>
 // #include <string.h>
-#include <ESP8266WiFi.h>
+#include <WiFi.h>
 #include "PID.h"
 // #include "PID_v1.h"
 
@@ -11,26 +11,19 @@ const int port = 2020;
 WiFiServer server(port);
 
 // mcu output pins to motor driver input
-// 8266 NodeMCU V3: GPIO 14: HSCLK: pulse at moment after boot..
-//    gpio02: connect to blue led
-// the following pin define seems to be the only-working one...
-const int motor1_In1 = 16;  // D0 ok
-// const int motor1_In1 = 10;  // S3  cause reboot
-// const int motor1_In2 = 0;  // D3  cannot output 3.3V, only 2.4... why??
-const int motor1_In2 = 2;  // D4  on board blue led, ok
-// const int motor1_In2 = 9;  // S2  cause reboot
-const int motor2_In1 = 13;  // D7
-const int motor2_In2 = 15;  // D8
-// best not to set in pre-defined pin
-const int motor1_PWM = 5;  //D1
-const int motor2_PWM = 4;  //D2
+const int motor1_In1 = 4;
+const int motor1_In2 = 2;
+const int motor1_PWM = 15;
+const int motor_STB = 5;  // standby
+const int motor2_In1 = 18;
+const int motor2_In2 = 19;
+const int motor2_PWM = 21;
 
 // mcu input pins for motor's encoder
-const int encoder1_C = 14;  //D5
-// const int encoder1_D = 13;
-// cannot use 3 and 1. Maybe GPIO1/3 is used for serial or other function by default...
-const int encoder2_C = 12;  //D6
-// const int encoder2_D = 9;
+const int encoder1_C = 25;
+const int encoder1_D = 26;
+const int encoder2_C = 32;
+const int encoder2_D = 33;
 bool motor_dir[2];
 
 // Variables for velocity, position
@@ -40,7 +33,8 @@ int encoder1_Count_b = 0;
 int encoder2_Count_b = 0;
 
 unsigned long prevTime = 0;      // To calculate elapsed time
-const int encoder_slots = 20;     // Number of slots in encoder disk
+const int encoder_slots = 13;     // Number of slots in encoder disk
+const int gearRate = 45;     // Number of slots in encoder disk
 const float wheelDiameter = 0.065;      // Wheel diameter in meter
 const float wheelBase = 0.15;           // Distance between wheels in meter
 
@@ -121,8 +115,8 @@ void setMotorSpeed(int motor, float speed) {
   }
 
   if (!usePid) {
-    if (mi == 0)
-      pwm = 0.96 * pwm;  // motor 1 is faster then 2 when they got same input
+    // if (mi == 0)
+    //   pwm = 0.96 * pwm;  // motor 1 is faster then 2 when they got same input
     analogWrite(motorPin[mi].in_pwm, pwm);
     return;
   }
@@ -154,7 +148,7 @@ void calculateOdometry() {
   // encoder1_Count += simBySpd_EncDt1;  // for sim
   // encoder2_Count += simBySpd_EncDt2;
 
-  delay(200);  // must delay, otherwise the deltaTime could be zero
+  delay(10);  // must delay, otherwise the deltaTime could be zero
   // Calculate time elapsed
   unsigned long currentTime = millis();
   float deltaTime = (currentTime - prevTime) / 1000.0; // seconds
@@ -166,7 +160,7 @@ void calculateOdometry() {
   encoder2_Count_b = encoder2_Count;
 
   // Calculate wheel speeds (m/s)
-  static double distPerCount = (PI * wheelDiameter) / encoder_slots;
+  static double distPerCount = PI * wheelDiameter / encoder_slots / gearRate;
   pid_motorSpeed[0].actual = (dt1 * distPerCount) / deltaTime;
   pid_motorSpeed[1].actual = (dt2 * distPerCount) / deltaTime;
 
@@ -209,8 +203,8 @@ void calculateOdometry() {
   if (!usePid) {
     return;
   }
-  Serial.println(pid_motorSpeed[0].getDataString_IE("1"));
-  Serial.println(pid_motorSpeed[1].getDataString_IE("2"));
+  // Serial.println(pid_motorSpeed[0].getDataString_IE("1"));
+  // Serial.println(pid_motorSpeed[1].getDataString_IE("2"));
 }
 
 bool bStopLoop = false;
@@ -237,9 +231,11 @@ void setup() {
   pinMode(motor1_In1, OUTPUT);
   pinMode(motor1_In2, OUTPUT);
   pinMode(motor1_PWM, OUTPUT);
+  pinMode(motor_STB, OUTPUT);
   pinMode(motor2_In1, OUTPUT);
   pinMode(motor2_In2, OUTPUT);
   pinMode(motor2_PWM, OUTPUT);
+  digitalWrite(motor_STB, 1);  // always standby
 
   // Encoder pins setup
   pinMode(encoder1_C, INPUT);    // INPUT_PULLUP
