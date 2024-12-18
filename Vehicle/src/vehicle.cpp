@@ -138,8 +138,6 @@ void appPidMotorSpeed() {
       return;
     pwm_bf[mi] = pwm;
     analogWrite(motorPin[mi].in_pwm, pwm);
-    Serial.println(pid_motorSpeed[mi].getPlotString(mi+1));
-    Serial.println(pid_motorSpeed[mi].getDataString_IE(mi+1));
   }
 }
 
@@ -179,13 +177,9 @@ void calculateOdometry() {
   }
 
   // Update robot's position
-  // Serial.printf(): float can only format with %f, not also with %d!
-  // Serial.printf("\n"): "\n" not cross-platform, needs \r\n in windows...
-  // Serial.printf("test newline\r\n");
   double linearVelocity_x = linearVelocity * cos(heading);  // cos/sin() is in radian!
   double linearVelocity_y = linearVelocity * sin(heading);
-  // double heading_degP = heading * 180/PI;
-  // Serial.printf("m1=%.3f, m2=%.3f, h=%.3f, vx=%.3f, vy=%.3f -- ", pid_motorSpeed[0].actual, pid_motorSpeed[1].actual, heading_degP, linearVelocity_x, linearVelocity_y);
+  // Serial.printf("vx=%.3f, vy=%.3f -- ", , linearVelocity_x, linearVelocity_y);
   posX += linearVelocity_x * deltaTime;
   posY += linearVelocity_y * deltaTime;
 
@@ -195,6 +189,12 @@ void calculateOdometry() {
   double heading_deg = heading * 180/PI;
 
   // Print speed, position
+  static int pt_b = 0;
+  int pt = millis();
+  if (pt - pt_b < 100)
+    return;
+  pt_b = pt;
+
   Serial.printf("%.3fs -- Vel: lin=%.3f, ang=%.3f; Pos: x, y, h = %.3f, %.3f, %.3f\r\n", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
 
   Serial.println(pid_motorSpeed[0].getPlotString("1"));
@@ -255,8 +255,10 @@ void setup() {
 
   prevTime = millis();    // Initialize time
 
-  Serial.println(pid_motorSpeed[0].getPlotString("1"));  // print a set of zero for plot
+  Serial.println(pid_motorSpeed[0].getPlotString("1"));  // print a set of initial zeros for plot
   Serial.println(pid_motorSpeed[1].getPlotString("2"));
+  Serial.println(pid_motorSpeed[0].getDataString_IE("1"));
+  Serial.println(pid_motorSpeed[1].getDataString_IE("2"));
   // stopLoop();
 };
 
