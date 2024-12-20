@@ -21,8 +21,8 @@ bool bStopLoop = false;
 WiFiClient client;
 
 // mcu input pins for joystick
-const int joystick_Vert_Pin = 36;
-const int joystick_Horz_Pin = 39;
+const int joystick_Vert_Pin = 33;  // VRX
+const int joystick_Horz_Pin = 32;  // VRY
 // https://docs.espressif.com/projects/esp-faq/en/latest/hardware-related/hardware-design.html#what-should-be-noted-when-i-configure-the-pins-of-esp32
 // GPIO34 cannot set a Pullup or Pulldown...
 const int reboot_InPin = 25;
