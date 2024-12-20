@@ -125,13 +125,14 @@ void setMotorSpeed(int motor, float speed) {
   pid_motorSpeed[mi].target = motorSpeedMax * pwm / pwmMax;
 }
 
-int pwm_bf[2] = {
-  0, 0
-};
+
 void appPidMotorSpeed() {
   if (!usePid)
     return;
 
+  static int pwm_bf[2] = {
+    0, 0
+  };
   for (int mi=0; mi<2; mi++) {
     int pwm = pid_motorSpeed[mi].CalOutput_Pos();
     if (pwm_bf[mi] == pwm)
