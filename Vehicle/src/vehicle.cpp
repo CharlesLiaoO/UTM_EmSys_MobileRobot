@@ -24,7 +24,8 @@ const int encoder1_C = 25;
 const int encoder1_D = 26;
 const int encoder2_C = 32;
 const int encoder2_D = 33;
-bool motor_dir[2];
+bool motor_dir[2] = {true, true};
+bool motor_dir_bf[2] = {true, true};
 
 // Variables for velocity, position
 int encoder1_Count = 0;
@@ -123,6 +124,11 @@ void setMotorSpeed(int motor, float speed) {
 
   const int pwmMax = 255;
   pid_motorSpeed[mi].target = motorSpeedMax * pwm / pwmMax;
+  if (motor_dir_bf[mi] != motor_dir[mi]) {
+    // pid_motorSpeed[mi].integral = 0;  // clear integral error before revers wheel direction
+    motor_dir_bf[mi] = motor_dir[mi];
+  }
+
 }
 
 
