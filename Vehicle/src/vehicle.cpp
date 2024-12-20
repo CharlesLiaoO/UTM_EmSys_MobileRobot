@@ -246,9 +246,9 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(encoder1_C), encoder1_ISR, FALLING);    //RISING
   attachInterrupt(digitalPinToInterrupt(encoder2_C), encoder2_ISR, FALLING);
 
-  pid_motorSpeed[0].setPID(300, 1, 0);
-  pid_motorSpeed[1].setPID(400, 1, 0);
   motorSpeedMax = 0.5;  //$ m/s, used as target speed.
+  pid_motorSpeed[0].setPID(2200, 0, 0);
+  pid_motorSpeed[1].setPID(2200, 0, 0);
   pid_motorSpeed[0].setLimit(0, 255);
   pid_motorSpeed[1].setLimit(0, 255);
 
