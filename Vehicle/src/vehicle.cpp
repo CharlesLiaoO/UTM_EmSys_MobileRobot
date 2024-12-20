@@ -34,7 +34,7 @@ int encoder2_Count_b = 0;
 
 unsigned long prevTime = 0;      // To calculate elapsed time
 const int encoder_slots = 13;     // Number of slots in encoder disk
-const int gearRate = 45;     // Number of slots in encoder disk
+const int gearRate = 90;
 const float wheelDiameter = 0.065;      // Wheel diameter in meter
 const float wheelBase = 0.15;           // Distance between wheels in meter
 
