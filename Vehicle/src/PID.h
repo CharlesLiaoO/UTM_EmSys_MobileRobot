@@ -19,6 +19,7 @@ public:
     // inner vars
     float error;
     float error_last;
+    float error_last_last;
     float integral;
 
     void setPID(float p, float i, float d) {
@@ -45,6 +46,19 @@ public:
         if (output > output_max) output = output_max;
         else if (output < output_min) output = output_min;
 
+        error_last = error;
+        return output;
+    }
+
+    float CalOutput_Inc() {
+        error = target - actual;
+
+        float output_dt = Kp * (error - error_last) + Ki * error + Kd * (error - 2*error_last + error_last_last);
+        output += output_dt;
+        if (output > output_max) output = output_max;
+        else if (output < output_min) output = output_min;
+
+        error_last_last = error_last;
         error_last = error;
         return output;
     }
