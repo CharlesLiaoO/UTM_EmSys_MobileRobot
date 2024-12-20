@@ -43,10 +43,8 @@ public:
         error = target - actual;
 
         integral += error;
-        if (integral > integral_limit)
-            integral = integral_limit;
-        else if (integral < -integral_limit)
-            integral = -integral_limit;
+        if (integral > integral_limit) integral = integral_limit;
+        else if (integral < -integral_limit) integral = -integral_limit;
 
         output = Kp * error + Ki * integral * dt + Kd * (error - error_last) / dt;
         if (output > output_max) output = output_max;
@@ -67,6 +65,30 @@ public:
         error_last_last = error_last;
         error_last = error;
         return output;
+    }
+
+    // --- following for debug
+    bool isSame_Main(const PID &other) {
+        if (target == other.target && actual == other.actual && output == other.output)
+            return true;
+        else
+            return false;
+    }
+    bool isSame_IE(const PID &other) {
+        if (integral == other.integral && error_last == other.error_last && error_last_last == other.error_last_last)
+            return true;
+        else
+            return false;
+    }
+    void assign_Main(const PID &other) {
+        target = other.target;
+        actual = other.actual;
+        output = other.output;
+    }
+    void assign_IE(const PID &other) {
+        integral = other.integral;
+        error_last = other.error_last;
+        error_last_last = other.error_last_last;
     }
 
     // String getDataString() {

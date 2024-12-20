@@ -41,6 +41,7 @@ const float wheelBase = 0.15;           // Distance between wheels in meter
 bool usePid = true;
 float motorSpeedMax;
 const int cycTime = 10;
+const int printCycTime = 100;
 PID pid_motorSpeed[2] /* = {cycTime, cycTime} */ ;
 
 double linearVelocity = 0;
@@ -134,12 +135,34 @@ void appPidMotorSpeed() {
   static int pwm_bf[2] = {
     0, 0
   };
+
+  static PID pid_bf[2];  // just for debug
+  static int pt_b = 0;
+  bool mayPrint = false;
+  int pt = millis();
+  if (pt - pt_b > printCycTime) {
+    pt_b = pt;
+    mayPrint = true;
+  }
   for (int mi=0; mi<2; mi++) {
     int pwm = pid_motorSpeed[mi].CalOutput_Pos();
+
+    if (mayPrint) {
+      if (pid_bf[mi].isSame_Main(pid_motorSpeed[mi])) {
+        pid_bf[mi].assign_Main(pid_motorSpeed[mi]);
+        Serial.println(pid_motorSpeed[mi].getPlotString(mi + 1));
+      }
+      if (pid_bf[mi].isSame_IE(pid_motorSpeed[mi])) {
+        pid_bf[mi].assign_IE(pid_motorSpeed[mi]);
+        Serial.println(pid_motorSpeed[mi].getDataString_IE(mi + 1));
+      }
+    }
+
     if (pwm_bf[mi] == pwm)
       return;
     pwm_bf[mi] = pwm;
     analogWrite(motorPin[mi].in_pwm, pwm);
+
   }
 }
 
@@ -195,20 +218,11 @@ void calculateOdometry() {
   // Print speed, position
   static int pt_b = 0;
   int pt = millis();
-  if (pt - pt_b < 100)
+  if (pt - pt_b < printCycTime)
     return;
   pt_b = pt;
 
   Serial.printf("%.3fs -- Vel: lin=%.3f, ang=%.3f; Pos: x, y, h = %.3f, %.3f, %.3f\r\n", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
-
-  Serial.println(pid_motorSpeed[0].getPlotString("1"));
-  Serial.println(pid_motorSpeed[1].getPlotString("2"));
-
-  if (!usePid) {
-    return;
-  }
-  Serial.println(pid_motorSpeed[0].getDataString_IE("1"));
-  Serial.println(pid_motorSpeed[1].getDataString_IE("2"));
 }
 
 bool bStopLoop = false;
