@@ -44,8 +44,9 @@ public:
 
     float CalOutput_Pos() {
         error = target - actual;
-        if (target == 0 && actual == 0) {
+        if (target == 0) {
             integral = 0;  // clear
+            error_last = 0;
         }
 
         integral += error;
@@ -75,7 +76,7 @@ public:
         error_last_last = error_last;
         error_last = error;
 
-        if (target == 0 && actual == 0) {
+        if (target == 0) {
             output = 0;  // clear
         }
         return output;
