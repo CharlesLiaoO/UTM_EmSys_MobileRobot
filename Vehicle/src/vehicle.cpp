@@ -130,6 +130,8 @@ void setMotorSpeed(int motor, float speed) {
     return;
   }
 
+  if (mi == 1) pwm *= 0.955;  //$ wheel align
+
   const int pwmMax = 255;
   pid_motorSpeed[mi].target = motorSpeedMax * pwm / pwmMax;
 }
@@ -225,6 +227,7 @@ void calculateOdometry() {
     return;
   pt_b = pt;
 
+  // Serial.printf("enc1=%d, enc2=%d, enc1/enc2=%f\n", encoder1_Count, encoder2_Count, float(encoder1_Count)/encoder2_Count);  // Not for wheel align
   Serial.printf("%.3fs -- Vel: lin=%.3f, ang=%.3f; Pos: x, y, h = %.3f, %.3f, %.3f\r\n", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
 }
 
