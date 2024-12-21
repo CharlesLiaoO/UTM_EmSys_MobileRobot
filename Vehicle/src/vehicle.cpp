@@ -159,10 +159,9 @@ void appPidMotorSpeed() {
     }
 
     if (pwm_bf[mi] == pwm)
-      return;
+      continue;  // not return!!
     pwm_bf[mi] = pwm;
     analogWrite(motorPin[mi].in_pwm, pwm);
-
   }
 }
 
