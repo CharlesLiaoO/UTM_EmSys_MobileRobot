@@ -20,13 +20,13 @@ public:
     const int dt;  // int may be better than float
 
     // just for remember output
-    float output;
+    float output = 0;
 
     // inner vars
-    float error;
-    float error_last;
-    float error_last_last;
-    float integral;
+    float error = 0;
+    float error_last = 0;
+    float error_last_last = 0;
+    float integral = 0;
 
     void setPID(float p, float i, float d) {
         Kp = p;
@@ -68,6 +68,17 @@ public:
     }
 
     // --- following for debug
+    bool isNotSame_Assign_Main(const PID &other) {
+        bool ret = !isSame_Main(other);
+        if (ret) assign_Main(other);
+        return ret;
+    }
+    bool isNotSame_Assign_IE(const PID &other) {
+        bool ret = !isSame_IE(other);
+        if (ret) assign_IE(other);
+        return ret;
+    }
+
     bool isSame_Main(const PID &other) {
         if (target == other.target && actual == other.actual && output == other.output)
             return true;

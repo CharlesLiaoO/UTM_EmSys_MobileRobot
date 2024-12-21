@@ -148,14 +148,10 @@ void appPidMotorSpeed() {
     int pwm = pid_motorSpeed[mi].CalOutput_Pos();
 
     if (mayPrint) {
-      if (pid_bf[mi].isSame_Main(pid_motorSpeed[mi])) {
-        pid_bf[mi].assign_Main(pid_motorSpeed[mi]);
+      if (pid_bf[mi].isNotSame_Assign_Main(pid_motorSpeed[mi]))
         Serial.println(pid_motorSpeed[mi].getPlotString(mi + 1));
-      }
-      if (pid_bf[mi].isSame_IE(pid_motorSpeed[mi])) {
-        pid_bf[mi].assign_IE(pid_motorSpeed[mi]);
+      if (pid_bf[mi].isNotSame_Assign_IE(pid_motorSpeed[mi]))
         Serial.println(pid_motorSpeed[mi].getDataString_IE(mi + 1));
-      }
     }
 
     if (pwm_bf[mi] == pwm)
