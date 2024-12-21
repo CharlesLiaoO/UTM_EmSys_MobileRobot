@@ -45,7 +45,7 @@ public:
     float CalOutput_Pos() {
         error = target - actual;
         if (target == 0 && actual == 0) {
-            integral = 0;  // clear integral
+            integral = 0;  // clear
         }
 
         integral += error;
@@ -74,6 +74,10 @@ public:
 
         error_last_last = error_last;
         error_last = error;
+
+        if (target == 0 && actual == 0) {
+            output = 0;  // clear
+        }
         return output;
     }
 
@@ -140,7 +144,7 @@ public:
     }
     String getDataString_IE(const char *prefix) {
         char tmp[512];
-        sprintf(tmp, "\1_integral:%f,\1_error_last:%f", integral, error_last);
+        sprintf(tmp, "\1_integral:%f,\1_error_last:%f,\1_error_last_last:%f", integral, error_last, error_last_last);
         String ret(tmp);
         ret.replace("\1", prefix);
         return ret;
