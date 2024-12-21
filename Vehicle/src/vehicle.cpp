@@ -277,11 +277,6 @@ void setup() {
   Serial.println("---- setup finished ----");
 
   prevTime = millis();    // Initialize time
-
-  Serial.println(pid_motorSpeed[0].getPlotString("1"));  // print a set of initial zeros for plot
-  Serial.println(pid_motorSpeed[1].getPlotString("2"));
-  Serial.println(pid_motorSpeed[0].getDataString_IE("1"));
-  Serial.println(pid_motorSpeed[1].getDataString_IE("2"));
   // stopLoop();
 };
 
@@ -337,6 +332,11 @@ void loop() {
   WiFiClient client = server.accept();  // listen for incoming clients
   if (client) {  // if you get a client,
     Serial.println("New Client");
+    for (int i=0; i<2; i++) {
+      Serial.println(pid_motorSpeed[i].getPlotString(i + 1));  // print a set of initial zeros for plot
+      Serial.println(pid_motorSpeed[i].getDataString_IE(i + 1));
+    }
+
     while (client.connected()) {  // loop while the client's connected
       if (client.available()) { // read data available
         DealClientData(&client);
