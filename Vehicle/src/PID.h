@@ -22,6 +22,9 @@ public:
     // just for remember output
     float output = 0;
 
+    // debug
+    bool printVars = false;
+
     // inner vars
     float error = 0;
     float error_last = 0;
@@ -41,12 +44,19 @@ public:
 
     float CalOutput_Pos() {
         error = target - actual;
+        if (target == 0 && actual == 0) {
+            integral = 0;  // clear integral
+        }
 
         integral += error;
         if (integral > integral_limit) integral = integral_limit;
         else if (integral < -integral_limit) integral = -integral_limit;
 
         output = Kp * error + Ki * integral * dt + Kd * (error - error_last) / dt;
+        if (printVars) {
+            printVars = false;
+            Serial.printf("Kp=%f, error=%f, Ki=%f, integral=%f, dt=%d, Kd=%f, error_last=%f, output=%f\n", Kp, error, Ki, integral, dt, Kd, error_last, output);
+        }
         if (output > output_max) output = output_max;
         else if (output < output_min) output = output_min;
 

@@ -39,6 +39,7 @@ const float wheelDiameter = 0.065;      // Wheel diameter in meter
 const float wheelBase = 0.15;           // Distance between wheels in meter
 
 bool usePid = true;
+const int pi_DebugPID = 23;
 float motorSpeedMax;
 const int cycTime = 10;
 const int printCycTime = 100;
@@ -79,6 +80,12 @@ void IRAM_ATTR encoder2_ISR() {
     encoder2_Count = encoder2_Count - encoder_dt;
     // Serial.println("2--");
   }
+}
+
+void IRAM_ATTR DebugPID() {
+  // Serial.println("DebugPID");
+  pid_motorSpeed[0].printVars = true;
+  pid_motorSpeed[1].printVars = true;
 }
 
 // Function to set motor direction and speed
@@ -257,6 +264,9 @@ void setup() {
   // pinMode(encoder2_D, INPUT);
   attachInterrupt(digitalPinToInterrupt(encoder1_C), encoder1_ISR, FALLING);    //RISING
   attachInterrupt(digitalPinToInterrupt(encoder2_C), encoder2_ISR, FALLING);
+
+  pinMode(pi_DebugPID, INPUT_PULLDOWN);
+  attachInterrupt(digitalPinToInterrupt(pi_DebugPID), DebugPID, RISING);
 
   motorSpeedMax = 0.5;  //$ m/s, used for target speed.
   pid_motorSpeed[0].setPID(2200, 200, 0);
