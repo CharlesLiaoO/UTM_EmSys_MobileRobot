@@ -152,6 +152,7 @@ void appPidMotorSpeed() {
     mayPrint = true;
   }
   for (int mi=0; mi<2; mi++) {
+    // int pwm = pid_motorSpeed[mi].CalOutput_Inc();
     int pwm = pid_motorSpeed[mi].CalOutput_Pos();
 
     if (mayPrint) {
@@ -269,8 +270,8 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(pi_DebugPID), DebugPID, RISING);
 
   motorSpeedMax = 0.5;  //$ m/s, used for target speed.
-  pid_motorSpeed[0].setPID(2200, 200, 0);
-  pid_motorSpeed[1].setPID(2200, 200, 0);
+  pid_motorSpeed[0].setPID(2200, 75, 20);
+  pid_motorSpeed[1].setPID(2200, 75, 20);
   pid_motorSpeed[0].setLimit(0, 255);
   pid_motorSpeed[1].setLimit(0, 255);
 
