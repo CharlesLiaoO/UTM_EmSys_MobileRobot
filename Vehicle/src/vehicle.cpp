@@ -58,10 +58,9 @@ double heading = 90.0 * PI/180;  // robot's Heading angle in radian
 float simBySpd_EncDt1 = 0;
 float simBySpd_EncDt2 = 0;
 const int encoder_dt = 1;  // sim: use 1 in physical project
+
 void IRAM_ATTR encoder1_ISR() {
-  // if (digitalRead(encoder1_D))
-  // if (!digitalRead(motor1_In1)) {
-  if (motor_dir[0]) {
+  if (digitalRead(encoder1_D)) {
     encoder1_Count = encoder1_Count + encoder_dt;
     // Serial.println("1++");
   } else {
@@ -71,9 +70,7 @@ void IRAM_ATTR encoder1_ISR() {
 }
 
 void IRAM_ATTR encoder2_ISR() {
-  // if (digitalRead(encoder2_D))
-  // if (!digitalRead(motor2_In1)) {
-  if (motor_dir[1]) {
+  if (! digitalRead(encoder2_D)) {
     encoder2_Count = encoder2_Count + encoder_dt;
     // Serial.println("2++");
   } else {
@@ -105,35 +102,19 @@ void setMotorSpeed(int motor, float speed) {
   // else
   //   simBySpd_EncDt2 = simBySpd_EncDt;
 
-  int pwm = abs(speed);
-  // pwm = (pwm == 255 ? 255 : pwm * 0.1);  // for simulation decay
-
   int mi = motor - 1;  // motor index
 
-  if (speed == 0) {
-    digitalWrite(motorPin[mi].in_1_L, LOW);
-    digitalWrite(motorPin[mi].in_2_R, LOW);
-  } else if (speed > 0) {
-    digitalWrite(motorPin[mi].in_1_L, HIGH);
-    digitalWrite(motorPin[mi].in_2_R, LOW);
-    motor_dir[mi] = true;
-  } else {
-    digitalWrite(motorPin[mi].in_1_L, LOW);
-    digitalWrite(motorPin[mi].in_2_R, HIGH);
-    motor_dir[mi] = false;
-  }
+  if (mi == 1) speed *= 0.955;  //$ wheel align
+
+  int pwm = abs(speed);
+  // pwm = (pwm == 255 ? 255 : speed * 0.1);  // for simulation decay
 
   if (!usePid) {
-    // if (mi == 0)
-    //   pwm = 0.96 * pwm;  // motor 1 is faster then 2 when they got same input
     analogWrite(motorPin[mi].in_pwm, pwm);
     return;
   }
 
-  if (mi == 1) pwm *= 0.955;  //$ wheel align
-
-  const int pwmMax = 255;
-  pid_motorSpeed[mi].target = motorSpeedMax * pwm / pwmMax;
+  pid_motorSpeed[mi].target = motorSpeedMax * speed / 255;  // only speed has sign
 }
 
 
@@ -167,7 +148,19 @@ void appPidMotorSpeed() {
     if (pwm_bf[mi] == pwm)
       continue;  // not return!!
     pwm_bf[mi] = pwm;
-    analogWrite(motorPin[mi].in_pwm, pwm);
+
+    if (pwm == 0) {
+      digitalWrite(motorPin[mi].in_1_L, LOW);
+      digitalWrite(motorPin[mi].in_2_R, LOW);
+    } else if (pwm > 0) {
+      digitalWrite(motorPin[mi].in_1_L, HIGH);
+      digitalWrite(motorPin[mi].in_2_R, LOW);
+    } else {
+      digitalWrite(motorPin[mi].in_1_L, LOW);
+      digitalWrite(motorPin[mi].in_2_R, HIGH);
+    }
+
+    analogWrite(motorPin[mi].in_pwm, abs(pwm));
   }
 }
 
@@ -191,8 +184,8 @@ void calculateOdometry() {
   static double distPerCount = PI * wheelDiameter / encoder_slots / gearRate;
   float wlv_1 = dt1 * distPerCount / deltaTime;  // wheel linear velocity
   float wlv_2 = dt2 * distPerCount / deltaTime;
-  pid_motorSpeed[0].actual = abs(wlv_1);
-  pid_motorSpeed[1].actual = abs(wlv_2);
+  pid_motorSpeed[0].actual = wlv_1;
+  pid_motorSpeed[1].actual = wlv_2;
 
   // Calculate linear and angular velocity
   linearVelocity = (wlv_1 + wlv_2) / 2;
@@ -263,9 +256,9 @@ void setup() {
 
   // Encoder pins setup
   pinMode(encoder1_C, INPUT);    // INPUT_PULLUP
-  // pinMode(encoder1_D, INPUT);
+  pinMode(encoder1_D, INPUT);
   pinMode(encoder2_C, INPUT);
-  // pinMode(encoder2_D, INPUT);
+  pinMode(encoder2_D, INPUT);
   attachInterrupt(digitalPinToInterrupt(encoder1_C), encoder1_ISR, FALLING);    //RISING
   attachInterrupt(digitalPinToInterrupt(encoder2_C), encoder2_ISR, FALLING);
 
@@ -275,8 +268,8 @@ void setup() {
   motorSpeedMax = 0.5;  //$ m/s, used for target speed.
   pid_motorSpeed[0].setPID(2200, 75, 20);
   pid_motorSpeed[1].setPID(2200, 75, 20);
-  pid_motorSpeed[0].setLimit(0, 255);
-  pid_motorSpeed[1].setLimit(0, 255);
+  pid_motorSpeed[0].setLimit(-255, 255);
+  pid_motorSpeed[1].setLimit(-255, 255);
 
   Serial.println("---- setup finished ----");
 
