@@ -165,7 +165,7 @@ void ctrlSpeed() {
   if (horz > 0) horz = 125;
   else if (horz < 0) horz = -125;
 
-  const float turnDecay = 0.7;
+  const float turnDecay = 0.8;
   if (horz == 0) {
     sendMotorSpeed(vert, vert);
   } else if (horz < 0) {    // left
