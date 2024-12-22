@@ -170,7 +170,7 @@ void ctrlSpeed() {
   vert = map(vert, -2048, 2048, -255, 255);  // map to forward speed
   horz = map(horz, -2048, 2048, -75, 75);  // map to rotate speed, not turn speed
 
-  if (vert > 0) vert = 255;  // digital control
+  if (vert > 0) vert = 255;  // digital control, only for debug PID
   else if (vert < 0) vert = -255;
   if (horz > 0) horz = 75;
   else if (horz < 0) horz = -75;
