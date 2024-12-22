@@ -10,10 +10,12 @@ const char* password = "lch12321";
 const int port = 2020;
 WiFiServer server(port);
 
+const int pin_ready = 2;
+
 // mcu output pins to motor driver input
-const int motor1_In1 = 4;
-const int motor1_In2 = 2;
-const int motor1_PWM = 15;
+const int motor1_In1 = 17;
+const int motor1_In2 = 16;
+const int motor1_PWM = 4;
 const int motor_STB = 5;  // standby
 const int motor2_In1 = 18;
 const int motor2_In2 = 19;
@@ -38,7 +40,7 @@ const int gearRate = 90;
 const float wheelDiameter = 0.065;      // Wheel diameter in meter
 const float wheelBase = 0.15;           // Distance between wheels in meter
 
-bool usePid = true;
+bool usePid = true;  //$
 const int pi_DebugPID = 23;
 float motorSpeedMax;
 const int cycTime = 10;
@@ -251,6 +253,8 @@ void setup() {
 
   server.begin();
 
+  pinMode(pin_ready, OUTPUT);
+
   // Motor pins setup
   pinMode(motor1_In1, OUTPUT);
   pinMode(motor1_In2, OUTPUT);
@@ -336,6 +340,8 @@ void loop() {
   WiFiClient client = server.accept();  // listen for incoming clients
   if (client) {  // if you get a client,
     Serial.println("New Client");
+    digitalWrite(pin_ready, 1);
+
     for (int i=0; i<2; i++) {
       Serial.println(pid_motorSpeed[i].getPlotString(i + 1));  // print a set of initial zeros for plot
       Serial.println(pid_motorSpeed[i].getDataString_IE(i + 1));
@@ -348,6 +354,8 @@ void loop() {
       appPidMotorSpeed();
       calculateOdometry();
     }
+
+    digitalWrite(pin_ready, 0);
     client.stop();  // if client is disconnected, stop client
     Serial.println("Client Disconnected");
   }

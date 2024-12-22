@@ -20,6 +20,8 @@ const int port = 2020;
 bool bStopLoop = false;
 WiFiClient client;
 
+const int pin_ready = 2;
+
 // mcu input pins for joystick
 const int joystick_Vert_Pin = 33;  // VRX
 const int joystick_Horz_Pin = 32;  // VRY
@@ -52,6 +54,8 @@ void setup() {
   Serial.begin(115200);
   Serial.println();
   Serial.println("---- setup ----");
+
+  pinMode(pin_ready, OUTPUT);
 
   pinMode(joystick_Vert_Pin, INPUT);
   pinMode(joystick_Horz_Pin, INPUT);
@@ -94,6 +98,7 @@ void setup() {
     return;
   }
 
+  digitalWrite(pin_ready, 1);
   Serial.println("server connected");
   Serial.println();
 }
@@ -102,7 +107,12 @@ void sendMotorSpeed(float speed1, float speed2)
 {
   char cmdArgs[512];
   sprintf(cmdArgs, "%s,%.3f,%.3f\n", "ms", speed1, speed2);
-  client.printf(cmdArgs);
+  // client.printf(cmdArgs);
+  int ret = client.write(cmdArgs);
+  if (ret != strlen(cmdArgs)) {
+    stopLoop("Tcp write err");
+    return;
+  }
   Serial.printf("Sent: %s", cmdArgs);
   // client.flush();
   return;
