@@ -45,7 +45,7 @@ const int pi_DebugPID = 23;
 float motorSpeedMax;
 const int cycTime = 10;
 const int printCycTime = 100;
-PID pid_motorSpeed[2] /* = {cycTime, cycTime} */ ;
+PID pid_motorSpeed[2];
 
 double linearVelocity = 0;
 double angularVelocity = 0;
