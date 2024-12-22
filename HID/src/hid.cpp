@@ -168,12 +168,12 @@ void ctrlSpeed() {
   // return;
 
   vert = map(vert, -2048, 2048, -255, 255);  // map to forward speed
-  horz = map(horz, -2048, 2048, -125, 125);  // map to rotate speed, not turn speed
+  horz = map(horz, -2048, 2048, -75, 75);  // map to rotate speed, not turn speed
 
   if (vert > 0) vert = 255;  // digital control
   else if (vert < 0) vert = -255;
-  if (horz > 0) horz = 125;
-  else if (horz < 0) horz = -125;
+  if (horz > 0) horz = 75;
+  else if (horz < 0) horz = -75;
 
   const float turnDecay = 0.8;
   if (horz == 0) {
