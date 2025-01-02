@@ -3,12 +3,13 @@
 #include <WiFi.h>
 #include "PID.h"
 // #include "PID_v1.h"
+#include <WebServer.h>
 
 // WIFI AP & tcp server
 const char* ssid = "lch-EmSys_Vehicle";
 const char* password = "lch12321";
-const int port = 2020;
-WiFiServer server(port);
+const int port = 80;
+WebServer server(port);
 
 const int pin_ready = 2;
 
@@ -230,6 +231,7 @@ void calculateOdometry() {
   pt_b = pt;
 
   // Serial.printf("enc1=%d, enc2=%d, enc1/enc2=%f\n", encoder1_Count, encoder2_Count, float(encoder1_Count)/encoder2_Count);  // Not for wheel align
+  // data
   Serial.printf("%.3fs -- Vel: lin=%.3f, ang=%.3f; Pos: x, y, h = %.3f, %.3f, %.3f\r\n", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
 }
 
@@ -239,6 +241,44 @@ void stopLoop(const char * msg=0) {
   if (msg)
     Serial.println(msg);
   Serial.println("Stop Loop");
+}
+
+void handleNotFound() {
+  String message = "File Not Found\n\n";
+  message += "URI: ";
+  message += server.uri();
+  message += "\nMethod: ";
+  message += (server.method() == HTTP_GET) ? "GET" : "POST";
+  message += "\nArguments: ";
+  message += server.args();
+  message += "\n";
+  for (uint8_t i = 0; i < server.args(); i++) {
+    message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
+  }
+  server.send(404, "text/plain", message);
+}
+
+void serverOnPost() {
+  if (server.uri() != "/cmd") {
+    return;
+  }
+  if (!server.hasArg("ms")) {
+    return;
+  }
+
+  String cmdArgs = server.arg("ms");
+  char cmd[512];
+  float speed1, speed2;
+  int matched = sscanf(cmdArgs.c_str(), "%2s,%f,%f", cmd, &speed1, &speed2);  //%s needs specify the width...
+  if (matched != 3) {
+    Serial.printf("cmdArgs parse failed, cmdArgs=%s, matched=%d\n", cmdArgs.c_str(), matched);
+    stopLoop();
+    return;
+  } else {
+    Serial.printf("Received: %s,%.3f,%.3f\n", cmd, speed1, speed2);
+    setMotorSpeed(1, speed1);
+    setMotorSpeed(2, speed2);
+  }
 }
 
 void setup() {
@@ -251,6 +291,17 @@ void setup() {
   Serial.print("AP IP address: ");
   Serial.println(WiFi.softAPIP());
 
+  server.onNotFound(handleNotFound);
+  server.on("/", HTTP_POST, serverOnPost);
+  // server.on("/", HTTP_GET, serverOnPost);
+  server.on("/wheel", [](){
+    String msg = pid_motorSpeed[0].getPlotString("1") + "\n" + pid_motorSpeed[1].getPlotString("2");
+    server.send(200, "text/plain", msg);
+    // server.send(200, "text/plain", pid_motorSpeed[1].getPlotString("2"));  // can only one msg be sent
+  });
+  server.on("/robot", [](){
+    server.send(200, "text/plain", pid_motorSpeed[1].getPlotString("1"));
+  });
   server.begin();
 
   pinMode(pin_ready, OUTPUT);
@@ -304,32 +355,6 @@ void DealClientData(WiFiClient *socket) {
   }
 }
 
-WiFiClient *socket = nullptr;
-void MultiClientProcess() {
-  if (!socket) {
-    *socket = server.accept();
-    if (socket->connected()) {
-      Serial.println("Connect to client OK");
-    } else {
-      socket->stop();
-      socket = nullptr;
-      Serial.println("Connect to client failed");
-    }
-  }
-
-  if (socket && socket->connected()) {
-    // Serial.println("Connected to client");
-  } else {
-      socket->stop();
-      socket = nullptr;
-      Serial.println("Disconnected");
-  }
-
-  if (socket && socket->available()) {
-    DealClientData(socket);
-  }
-}
-
 void loop() {
   if (bStopLoop) {
     delay(10);
@@ -337,29 +362,25 @@ void loop() {
     // while(1);
   }
 
-  WiFiClient client = server.accept();  // listen for incoming clients
-  if (client) {  // if you get a client,
-    Serial.println("New Client");
-    digitalWrite(pin_ready, 1);
-
-    for (int i=0; i<2; i++) {
-      Serial.println(pid_motorSpeed[i].getPlotString(i + 1));  // print a set of initial zeros for plot
-      Serial.println(pid_motorSpeed[i].getDataString_IE(i + 1));
-    }
-
-    while (client.connected()) {  // loop while the client's connected
-      if (client.available()) { // read data available
-        DealClientData(&client);
-      }
-      appPidMotorSpeed();
-      calculateOdometry();
-    }
-
-    digitalWrite(pin_ready, 0);
-    client.stop();  // if client is disconnected, stop client
-    Serial.println("Client Disconnected");
-  }
-
+  server.handleClient();
   appPidMotorSpeed();
   calculateOdometry();
+
+  static bool cnt_bf = false;
+  bool cnt = server.client().connected();
+  if (cnt_bf != cnt) {
+    cnt_bf = cnt;
+    if (cnt) {
+      Serial.println("New Client");
+      digitalWrite(pin_ready, 1);
+      for (int i=0; i<2; i++) {
+        Serial.println(pid_motorSpeed[i].getPlotString(i + 1));  // print a set of initial zeros for plot
+        Serial.println(pid_motorSpeed[i].getDataString_IE(i + 1));
+      }
+    } else {
+      digitalWrite(pin_ready, 0);
+      // client.stop();  // if client is disconnected, stop client
+      Serial.println("Client Disconnected");
+    }
+  }
 }
