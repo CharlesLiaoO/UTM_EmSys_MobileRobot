@@ -4,6 +4,7 @@
 #include "PID.h"
 // #include "PID_v1.h"
 #include <WebServer.h>
+#include <LittleFS.h>
 
 // WIFI AP & tcp server
 const char* ssid = "lch-EmSys_Vehicle";
@@ -290,6 +291,19 @@ void setup() {
   WiFi.softAP(ssid, password);
   Serial.print("AP IP address: ");
   Serial.println(WiFi.softAPIP());
+
+  if (!LittleFS.begin()) {
+    Serial.println("Failed to mount file system");
+    stopLoop();
+    return;
+  }
+  File file = LittleFS.open("/file.txt", "r");
+  if (!file) {
+    Serial.println("Failed to open file");
+    stopLoop();
+    return;
+  }
+  Serial.println(file.readString());
 
   server.onNotFound(handleNotFound);
   server.on("/", HTTP_POST, serverOnPost);
