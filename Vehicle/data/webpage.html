@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>lch-EmSys_Vehicle Control</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="script.js"></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row-fluid">
+            <div class="span12">
+                <h2 class="text-center" style="text-align: center;">
+                    <strong>lch-EmSys_Vehicle Control</strong>
+                </h2>
+            </div>
+        </div>
+        <div class="row-fluid">
+            <div class="span4">
+                <table id="wheel">
+                    <thead>
+                        <tr>
+                            <th>
+                                Name
+                            </th>
+                            <th>
+                                Value
+                            </th>
+                            <th>
+                                Unit
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                1_setpoint
+                            </td>
+                            <td id="1_setpoint">
+                                0
+                            </td>
+                            <td>
+                                m/s
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                1_feedback
+                            </td>
+                            <td id="1_feedback">
+                                0
+                            </td>
+                            <td>
+                                m/s
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                1_output
+                            </td>
+                            <td id="1_output">
+                                0
+                            </td>
+                            <td>
+                                NA
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                2_setpoint
+                            </td>
+                            <td id="2_setpoint">
+                                0
+                            </td>
+                            <td>
+                                m/s
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                2_feedback
+                            </td>
+                            <td id="2_feedback">
+                                0
+                            </td>
+                            <td>
+                                m/s
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                2_output
+                            </td>
+                            <td id="2_output">
+                                0
+                            </td>
+                            <td>
+                                NA
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="span8">
+                <table id="robot">
+                    <thead>
+                        <tr>
+                            <th>
+                                Name
+                            </th>
+                            <th>
+                                Value
+                            </th>
+                            <th>
+                                Unit
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                cyc_time
+                            </td>
+                            <td id="cyc_time">
+                                0
+                            </td>
+                            <td>
+                                s
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                v_linear
+                            </td>
+                            <td id="v_linear">
+                                0
+                            </td>
+                            <td>
+                                m/s
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                v_angle
+                            </td>
+                            <td id="v_angle">
+                                0
+                            </td>
+                            <td>
+                                deg/s
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                x
+                            </td>
+                            <td id="x">
+                                0
+                            </td>
+                            <td>
+                                m
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                y
+                            </td>
+                            <td id="y">
+                                0
+                            </td>
+                            <td>
+                                m
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                h
+                            </td>
+                            <td id="h">
+                                0
+                            </td>
+                            <td>
+                                deg
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="row-fluid">
+            <table class="dir">
+                <tbody>
+                    <tr>
+                        <td>
+                        </td>
+                        <td>
+                            <button class="btn" type="button" onpointerdown="btnDeal('u')" onpointerup="btnDeal('0')">↑</button>
+                        </td>
+                        <td>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button class="btn" type="button" onpointerdown="btnDeal('l')" onpointerup="btnDeal('0')">←</button>
+                        </td>
+                        <td>
+                        </td>
+                        <td>
+                            <button class="btn" type="button" onpointerdown="btnDeal('r')" onpointerup="btnDeal('0')">→</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                        </td>
+                        <td>
+                            <button class="btn" type="button" onpointerdown="btnDeal('d')" onpointerup="btnDeal('0')">↓</button>
+                        </td>
+                        <td>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p id="debugMsg">
+            --debug message--
+        </p>
+    </div>
+</body>

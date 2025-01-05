@@ -4,11 +4,12 @@
 #include <WebServer.h>
 #include <LittleFS.h>
 
-// WIFI AP & tcp server
-const char* ssid = "lch-EmSys_Vehicle";
-const char* password = "lch12321";
-const int port = 80;
-WebServer server(port);
+void setup();
+
+// WIFI & server
+bool bApMode = true;
+WebServer server(80);  // http port
+WiFiClient sseClient;  // keep life span
 
 const int pin_ready = 2;
 
@@ -90,6 +91,15 @@ void IRAM_ATTR DebugPID() {
   pid_motorSpeed[1].printVars = true;
 }
 
+void sv_send_sse(const String& message) {
+  // Serial.println(message);
+  if (sseClient && sseClient.connected()) {
+    sseClient.print("data: ");  //DO NOT forget data: ...
+    sseClient.println(message);
+    sseClient.println();  // end data
+  }
+}
+
 // Function to set motor direction and speed
 struct MotorPin {
   int in_1_L;
@@ -138,7 +148,6 @@ void setMotorSpeed(int motor, float speed) {
   pid_motorSpeed[mi].setpoint = motorSpeedMax * pwm / pwmMax;
 }
 
-
 void appPidMotorSpeed() {
   if (!usePid)
     return;
@@ -161,9 +170,10 @@ void appPidMotorSpeed() {
 
     if (mayPrint) {
       if (pid_bf[mi].isNotSame_Assign_Main(pid_motorSpeed[mi]))
-        Serial.println(pid_motorSpeed[mi].getPlotString(mi + 1));
-      if (pid_bf[mi].isNotSame_Assign_IE(pid_motorSpeed[mi]))
-        Serial.println(pid_motorSpeed[mi].getDataString_IE(mi + 1));
+        sv_send_sse(pid_motorSpeed[mi].getJson(mi + 1));
+        // Serial.println(pid_motorSpeed[mi].getPlotString(mi + 1));
+      // if (pid_bf[mi].isNotSame_Assign_IE(pid_motorSpeed[mi]))
+      //   Serial.println(pid_motorSpeed[mi].getDataString_IE(mi + 1));
     }
 
     if (pwm_bf[mi] == pwm)
@@ -230,8 +240,13 @@ void calculateOdometry() {
   pt_b = pt;
 
   // Serial.printf("enc1=%d, enc2=%d, enc1/enc2=%f\n", encoder1_Count, encoder2_Count, float(encoder1_Count)/encoder2_Count);  // Not for wheel align
-  // data
-  Serial.printf("%.3fs -- Vel: lin=%.3f, ang=%.3f; Pos: x, y, h = %.3f, %.3f, %.3f\r\n", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
+  // Serial.printf("%.3fs -- Vel: lin=%.3f, ang=%.3f; Pos: x, y, h = %.3f, %.3f, %.3f\r\n", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
+
+  // data json to webpage
+  char json[1024];
+  sprintf(json, R"({"cyc_time":%.3f, "v_linear":%.3f, "v_angle":%.3f, "x":%.3f, "y":%.3f, "h":%.3f})", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
+  // Serial.println(json);
+  sv_send_sse(json);
 }
 
 bool bStopLoop = false;
@@ -242,30 +257,22 @@ void stopLoop(const char * msg=0) {
   Serial.println("Stop Loop");
 }
 
-void handleNotFound() {
-  String message = "File Not Found\n\n";
-  message += "URI: ";
-  message += server.uri();
-  message += "\nMethod: ";
-  message += (server.method() == HTTP_GET) ? "GET" : "POST";
-  message += "\nArguments: ";
-  message += server.args();
-  message += "\n";
-  for (uint8_t i = 0; i < server.args(); i++) {
-    message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
+void serverOnSse() {
+  Serial.println("serverOnSse");
+  if (server.client()) {
+    sseClient = server.client();
+    sseClient.println("HTTP/1.1 200 OK");
+    sseClient.println("Content-Type: text/event-stream");
+    sseClient.println("Cache-Control: no-cache");
+    sseClient.println("Connection: keep-alive");
+    sseClient.println();  // end header
+    Serial.println("serverOnSse OK");
   }
-  server.send(404, "text/plain", message);
 }
 
 void serverOnPost() {
-  if (server.uri() != "/cmd") {
-    return;
-  }
-  if (!server.hasArg("ms")) {
-    return;
-  }
+  String cmdArgs = server.arg("plain");
 
-  String cmdArgs = server.arg("ms");
   char cmd[512];
   float speed1, speed2;
   int matched = sscanf(cmdArgs.c_str(), "%2s,%f,%f", cmd, &speed1, &speed2);  //%s needs specify the width...
@@ -278,6 +285,8 @@ void serverOnPost() {
     setMotorSpeed(1, speed1);
     setMotorSpeed(2, speed2);
   }
+
+  server.send(200, "text/plain", "OK");  // send resp
 }
 
 void setup() {
@@ -285,35 +294,66 @@ void setup() {
   Serial.println();
   Serial.println("---- setup ----");
 
-  // Remove the password parameter, if you want the AP (Access Point) to be open
-  WiFi.softAP(ssid, password);
-  Serial.print("AP IP address: ");
-  Serial.println(WiFi.softAPIP());
+  if (bApMode) {
+    WiFi.softAP("lch-EmSys_Vehicle", "lch12321");
+    Serial.print("AP IP address: ");
+    Serial.println(WiFi.softAPIP());
+  } else {
+    WiFi.begin("R1216_2.4GHz", "r121612321");
+    Serial.print("Connecting to WiFi");
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(1000);
+      Serial.print(".");
+    }
+    Serial.println("\nConnected as " + WiFi.localIP().toString());
+  }
 
   if (!LittleFS.begin()) {
     Serial.println("Failed to mount file system");
     stopLoop();
     return;
   }
-  File file = LittleFS.open("/file.txt", "r");
-  if (!file) {
-    Serial.println("Failed to open file");
-    stopLoop();
-    return;
-  }
-  Serial.println(file.readString());
 
-  server.onNotFound(handleNotFound);
-  server.on("/", HTTP_POST, serverOnPost);
-  // server.on("/", HTTP_GET, serverOnPost);
-  server.on("/wheel", [](){
-    String msg = pid_motorSpeed[0].getPlotString("1") + "\n" + pid_motorSpeed[1].getPlotString("2");
-    server.send(200, "text/plain", msg);
-    // server.send(200, "text/plain", pid_motorSpeed[1].getPlotString("2"));  // can only one msg be sent
+  server.onNotFound([](){
+    server.send(404, "text/plain", "Error Address");
   });
-  server.on("/robot", [](){
-    server.send(200, "text/plain", pid_motorSpeed[1].getPlotString("1"));
+
+  server.on("/", HTTP_GET, []() {
+    Serial.println("html started");
+    File file = LittleFS.open("/webpage.html", "r");
+    if (!file) {
+      Serial.println("Failed to open file -html");
+      stopLoop();
+      return;
+    }
+    server.streamFile(file, "text/html");
   });
+
+  server.on("/style.css", HTTP_GET, []() {
+    Serial.println("css started");
+    File file = LittleFS.open("/style.css", "r");
+    if (!file) {
+      Serial.println("Failed to open file -style");
+      stopLoop();
+      return;
+    }
+    server.streamFile(file, "text/css");
+  });
+
+  server.on("/script.js", HTTP_GET, []() {
+    Serial.println("script started");
+    File file = LittleFS.open("/script.js", "r");
+    if (!file) {
+      Serial.println("Failed to open file -script");
+      stopLoop();
+      return;
+    }
+    server.streamFile(file, "application/javascript");
+  });
+
+  server.on("/cmd", HTTP_POST, serverOnPost);
+  server.on("/events", HTTP_GET, serverOnSse);
+
   server.begin();
 
   pinMode(pin_ready, OUTPUT);
@@ -351,22 +391,6 @@ void setup() {
   // stopLoop();
 };
 
-void DealClientData(WiFiClient *socket) {
-  String cmdArgs = socket->readStringUntil('\n');
-  char cmd[512];
-  float speed1, speed2;
-  int matched = sscanf(cmdArgs.c_str(), "%2s,%f,%f", cmd, &speed1, &speed2);  //%s needs specify the width...
-  if (matched != 3) {
-    Serial.printf("cmdArgs parse failed, cmdArgs=%s, matched=%d\n", cmdArgs.c_str(), matched);
-    stopLoop();
-    return;
-  } else {
-    Serial.printf("Received: %s,%.3f,%.3f\n", cmd, speed1, speed2);
-    setMotorSpeed(1, speed1);
-    setMotorSpeed(2, speed2);
-  }
-}
-
 void loop() {
   if (bStopLoop) {
     delay(10);
@@ -387,7 +411,6 @@ void loop() {
       digitalWrite(pin_ready, 1);
       for (int i=0; i<2; i++) {
         Serial.println(pid_motorSpeed[i].getPlotString(i + 1));  // print a set of initial zeros for plot
-        Serial.println(pid_motorSpeed[i].getDataString_IE(i + 1));
       }
     } else {
       digitalWrite(pin_ready, 0);

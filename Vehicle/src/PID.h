@@ -119,6 +119,19 @@ public:
     //     String ret(tmp);
     //     return ret;
     // }
+    String getJson(int prefix) {
+        char tmp[64];
+        itoa(prefix, tmp, 10);
+        return getJson(tmp);
+    }
+    String getJson(const char *prefix) {
+        char tmp[512];
+        sprintf(tmp, R"({"P_setpoint":%f, "P_feedback":%f, "P_output":%f})", setpoint, feedback, output);
+        String ret(tmp);
+        ret.replace("P", prefix);
+        // Serial.println(ret);
+        return ret;
+    }
 
     String getPlotString(int prefix) {
         char tmp[64];
