@@ -1,8 +1,6 @@
 #include <Arduino.h>
-// #include <string.h>
 #include <WiFi.h>
 #include "PID.h"
-// #include "PID_v1.h"
 #include <WebServer.h>
 #include <LittleFS.h>
 
@@ -137,7 +135,7 @@ void setMotorSpeed(int motor, float speed) {
   if (mi == 1) pwm *= 0.947;  //$ wheel align
 
   const int pwmMax = 255;
-  pid_motorSpeed[mi].target = motorSpeedMax * pwm / pwmMax;
+  pid_motorSpeed[mi].setpoint = motorSpeedMax * pwm / pwmMax;
 }
 
 
@@ -195,8 +193,8 @@ void calculateOdometry() {
   static double distPerCount = PI * wheelDiameter / encoder_slots / gearRate;
   float wlv_1 = dt1 * distPerCount / deltaTime;  // wheel linear velocity
   float wlv_2 = dt2 * distPerCount / deltaTime;
-  pid_motorSpeed[0].actual = abs(wlv_1);
-  pid_motorSpeed[1].actual = abs(wlv_2);
+  pid_motorSpeed[0].feedback = abs(wlv_1);
+  pid_motorSpeed[1].feedback = abs(wlv_2);
 
   // Calculate linear and angular velocity
   linearVelocity = (wlv_1 + wlv_2) / 2;
@@ -341,7 +339,7 @@ void setup() {
   pinMode(pi_DebugPID, INPUT_PULLDOWN);
   attachInterrupt(digitalPinToInterrupt(pi_DebugPID), DebugPID, RISING);
 
-  motorSpeedMax = 0.5;  //$ m/s, used for target speed.
+  motorSpeedMax = 0.5;  //$ m/s, used for setpoint speed.
   pid_motorSpeed[0].setPID(2200, 75, 20);
   pid_motorSpeed[1].setPID(2200, 75, 20);
   pid_motorSpeed[0].setLimit(0, 255);

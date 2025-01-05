@@ -12,8 +12,8 @@ public:
     float output_max = FLT_MAX;
     float integral_limit = FLT_MAX;
     // 1.2 automatically by program
-    float target = 0;
-    float actual = 0;
+    float setpoint = 0;
+    float feedback = 0;
 
     // just for remember output
     float output = 0;
@@ -39,8 +39,8 @@ public:
     }
 
     float CalOutput_Pos() {
-        error = target - actual;
-        if (target == 0) {
+        error = setpoint - feedback;
+        if (setpoint == 0) {
             integral = 0;  // clear
             error_last = 0;
         }
@@ -62,7 +62,7 @@ public:
     }
 
     float CalOutput_Inc() {
-        error = target - actual;
+        error = setpoint - feedback;
 
         float output_dt = Kp * (error - error_last) + Ki * error + Kd * (error - 2*error_last + error_last_last);
         output += output_dt;
@@ -72,7 +72,7 @@ public:
         error_last_last = error_last;
         error_last = error;
 
-        if (target == 0) {
+        if (setpoint == 0) {
             output = 0;  // clear
         }
         return output;
@@ -91,7 +91,7 @@ public:
     }
 
     bool isSame_Main(const PID &other) {
-        if (target == other.target && actual == other.actual && output == other.output)
+        if (setpoint == other.setpoint && feedback == other.feedback && output == other.output)
             return true;
         else
             return false;
@@ -103,8 +103,8 @@ public:
             return false;
     }
     void assign_Main(const PID &other) {
-        target = other.target;
-        actual = other.actual;
+        setpoint = other.setpoint;
+        feedback = other.feedback;
         output = other.output;
     }
     void assign_IE(const PID &other) {
@@ -115,7 +115,7 @@ public:
 
     // String getDataString() {
     //     char tmp[512];
-    //     sprintf(tmp, "%f,%f,%f", target, actual, output);
+    //     sprintf(tmp, "%f,%f,%f", setpoint, feedback, output);
     //     String ret(tmp);
     //     return ret;
     // }
@@ -127,8 +127,8 @@ public:
     }
     String getPlotString(const char *prefix) {
         char tmp[512];
-        sprintf(tmp, ">\1_target:%f,\1_actual:%f,\1_output:%f", target, actual, output);  // > Format in VSCode Extension Serial Plotter: cannot '-' as var Name
-        // sprintf(tmp, "\1-target:%f,\1-actual:%f,\1-output:%f", target, actual, output);  // no > in Arduino IDE
+        sprintf(tmp, ">\1_setpoint:%f,\1_feedback:%f,\1_output:%f", setpoint, feedback, output);  // > Format in VSCode Extension Serial Plotter: cannot '-' as var Name
+        // sprintf(tmp, "\1-setpoint:%f,\1-feedback:%f,\1-output:%f", setpoint, feedback, output);  // no > in Arduino IDE
         String ret(tmp);
         ret.replace("\1", prefix);
         return ret;
