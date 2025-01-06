@@ -52,7 +52,7 @@ public:
         output = Kp * error + Ki * integral + Kd * (error - error_last);
         if (printVars) {
             printVars = false;
-            Serial.printf("Kp=%f, error=%f, Ki=%f, integral=%f, Kd=%f, error_last=%f, output=%f\n", Kp, error, Ki, integral, Kd, error_last, output);
+            Serial.printf("Kp=%.3f, error=%.3f, Ki=%.3f, integral=%.3f, Kd=%.3f, error_last=%.3f, output=%.3f\n", Kp, error, Ki, integral, Kd, error_last, output);
         }
         if (output > output_max) output = output_max;
         else if (output < output_min) output = output_min;
@@ -115,7 +115,7 @@ public:
 
     // String getDataString() {
     //     char tmp[512];
-    //     sprintf(tmp, "%f,%f,%f", setpoint, feedback, output);
+    //     sprintf(tmp, "%.3f,%.3f,%.3f", setpoint, feedback, output);
     //     String ret(tmp);
     //     return ret;
     // }
@@ -126,7 +126,7 @@ public:
     }
     String getJson(const char *prefix) {
         char tmp[512];
-        sprintf(tmp, R"({"P_setpoint":%f, "P_feedback":%f, "P_output":%f})", setpoint, feedback, output);
+        sprintf(tmp, R"({"P_setpoint":%.3f, "P_feedback":%.3f, "P_output":%.3f})", setpoint, feedback, output);
         String ret(tmp);
         ret.replace("P", prefix);
         // Serial.println(ret);
@@ -140,8 +140,8 @@ public:
     }
     String getPlotString(const char *prefix) {
         char tmp[512];
-        sprintf(tmp, ">\1_setpoint:%f,\1_feedback:%f,\1_output:%f", setpoint, feedback, output);  // > Format in VSCode Extension Serial Plotter: cannot '-' as var Name
-        // sprintf(tmp, "\1-setpoint:%f,\1-feedback:%f,\1-output:%f", setpoint, feedback, output);  // no > in Arduino IDE
+        sprintf(tmp, ">\1_setpoint:%.3f,\1_feedback:%.3f,\1_output:%.3f", setpoint, feedback, output);  // > Format in VSCode Extension Serial Plotter: cannot '-' as var Name
+        // sprintf(tmp, "\1-setpoint:%.3f,\1-feedback:%.3f,\1-output:%.3f", setpoint, feedback, output);  // no > in Arduino IDE
         String ret(tmp);
         ret.replace("\1", prefix);
         return ret;
@@ -154,7 +154,7 @@ public:
     }
     String getDataString_IE(const char *prefix) {
         char tmp[512];
-        sprintf(tmp, "\1_integral:%f,\1_error_last:%f,\1_error_last_last:%f", integral, error_last, error_last_last);
+        sprintf(tmp, "\1_integral:%.3f,\1_error_last:%.3f,\1_error_last_last:%.3f", integral, error_last, error_last_last);
         String ret(tmp);
         ret.replace("\1", prefix);
         return ret;
