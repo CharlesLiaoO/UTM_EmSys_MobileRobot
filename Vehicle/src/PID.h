@@ -119,6 +119,19 @@ public:
     //     String ret(tmp);
     //     return ret;
     // }
+    String getShortString(int prefix) {
+        char tmp[64];
+        itoa(prefix, tmp, 10);
+        return getShortString(tmp);
+    }
+    String getShortString(const char *prefix) {
+        char tmp[512];
+        sprintf(tmp, "(%.1f,%.1f)", setpoint, feedback);
+        String ret(tmp);
+        // ret.replace("P", prefix);
+        // Serial.println(ret);
+        return ret;
+    }
     String getJson(int prefix) {
         char tmp[64];
         itoa(prefix, tmp, 10);
