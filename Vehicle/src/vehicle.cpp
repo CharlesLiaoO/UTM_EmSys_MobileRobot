@@ -145,42 +145,30 @@ void Blynk_pushData()
 BLYNK_WRITE(V1)
 {
   int pinData = param.asInt();
-  if (pinData == 1) {
-    setMotorSpeed_str("ms,255,255");
+  if (pinData < 0) {
+    setMotorSpeed_str("ms,-75,75");
+    // Serial.println("LR");
+  } else if (pinData > 0) {
+    setMotorSpeed_str("ms,75,-75");
+    // Serial.println("RR");
   } else {
     setMotorSpeed_str("ms,0,0");
   }
-  Serial.println("FW");
 }
 BLYNK_WRITE(V2)
 {
   int pinData = param.asInt();
-  if (pinData == 1) {
+    Serial.println(pinData);
+
+  if (pinData < 0) {
     setMotorSpeed_str("ms,-255,-255");
+    // Serial.println("BW");
+  } else if (pinData > 0) {
+    setMotorSpeed_str("ms,255,255");
+    // Serial.println("FW");
   } else {
     setMotorSpeed_str("ms,0,0");
   }
-  Serial.println("BW");
-}
-BLYNK_WRITE(V3)
-{
-  int pinData = param.asInt();
-  if (pinData == 1) {
-    setMotorSpeed_str("ms,-75,75");
-  } else {
-    setMotorSpeed_str("ms,0,0");
-  }
-  Serial.println("LR");
-}
-BLYNK_WRITE(V4)
-{
-  int pinData = param.asInt();
-  if (pinData == 1) {
-    setMotorSpeed_str("ms,75,-75");
-  } else {
-    setMotorSpeed_str("ms,0,0");
-  }
-  Serial.println("RR");
 }
 
 void sv_send_sse(const String& message) {
