@@ -16,7 +16,103 @@
             </div>
         </div>
         <div class="row-fluid">
-            <div class="span4">
+            <div class="span-robot">
+                <table id="robot">
+                    <thead>
+                        <tr>
+                            <th>
+                                Name
+                            </th>
+                            <th>
+                                Value
+                            </th>
+                            <th>
+                                Unit
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                operation
+                            </td>
+                            <td id="operation">
+                                0
+                            </td>
+                            <td>
+                                NA
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                x
+                            </td>
+                            <td id="x">
+                                0
+                            </td>
+                            <td>
+                                m
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                y
+                            </td>
+                            <td id="y">
+                                0
+                            </td>
+                            <td>
+                                m
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                h
+                            </td>
+                            <td id="h">
+                                0
+                            </td>
+                            <td>
+                                deg
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                v_linear
+                            </td>
+                            <td id="v_linear">
+                                0
+                            </td>
+                            <td>
+                                m/s
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                v_angle
+                            </td>
+                            <td id="v_angle">
+                                0
+                            </td>
+                            <td>
+                                deg/s
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                cyc_time
+                            </td>
+                            <td id="cyc_time">
+                                0
+                            </td>
+                            <td>
+                                s
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="span-wheel">
                 <table id="wheel">
                     <thead>
                         <tr>
@@ -101,94 +197,9 @@
                     </tbody>
                 </table>
             </div>
-            <div class="span8">
-                <table id="robot">
-                    <thead>
-                        <tr>
-                            <th>
-                                Name
-                            </th>
-                            <th>
-                                Value
-                            </th>
-                            <th>
-                                Unit
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>
-                                cyc_time
-                            </td>
-                            <td id="cyc_time">
-                                0
-                            </td>
-                            <td>
-                                s
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                v_linear
-                            </td>
-                            <td id="v_linear">
-                                0
-                            </td>
-                            <td>
-                                m/s
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                v_angle
-                            </td>
-                            <td id="v_angle">
-                                0
-                            </td>
-                            <td>
-                                deg/s
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                x
-                            </td>
-                            <td id="x">
-                                0
-                            </td>
-                            <td>
-                                m
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                y
-                            </td>
-                            <td id="y">
-                                0
-                            </td>
-                            <td>
-                                m
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                h
-                            </td>
-                            <td id="h">
-                                0
-                            </td>
-                            <td>
-                                deg
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
         </div>
         <div class="row-fluid">
-            <table class="dir">
+            <table class="table_btn">
                 <tbody>
                     <tr>
                         <td>
@@ -204,6 +215,7 @@
                             <button class="btn" type="button" onpointerdown="btnDeal('l')" onpointerup="btnDeal('0')">←</button>
                         </td>
                         <td>
+                            <button class="btn" type="button" onpointerdown="btnDeal('o')" onpointerup="btnDeal('n')">OP</button>
                         </td>
                         <td>
                             <button class="btn" type="button" onpointerdown="btnDeal('r')" onpointerup="btnDeal('0')">→</button>

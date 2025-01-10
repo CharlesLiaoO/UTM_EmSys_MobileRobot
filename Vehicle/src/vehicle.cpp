@@ -5,14 +5,14 @@
 #include <LittleFS.h>
 
 bool bBlynk = true;
-bool bApMode = true;
+bool bApMode = false;
 void setup();
 
 /* Fill in information from your Blynk Template here */
 /* Read more: https://bit.ly/BlynkInject */
 //#define BLYNK_TEMPLATE_ID           "TMPxxxxxx"
 //#define BLYNK_TEMPLATE_NAME         "Device"
-#define BLYNK_TEMPLATE_ID "TMPL6WPFtzYBT"
+#define BLYNK_TEMPLATE_ID "TMPL6xqyA-YJ0"
 #define BLYNK_TEMPLATE_NAME "UTM EmSys A3"
 
 #define BLYNK_FIRMWARE_VERSION        "0.1.0"
@@ -37,7 +37,8 @@ void setup();
 WebServer myserver(80);  // http port
 WiFiClient sseClient;  // keep life span
 
-const int pin_ready = 2;
+// const int pin_ready = 2;
+const int pin_op = 2;
 
 // mcu output pins to motor driver input
 const int motor1_In1 = 17;
@@ -122,33 +123,49 @@ void IRAM_ATTR DebugPID() {
 
 String getRobotDataJson();
 String getRobotDataShortString();
-void setMotorSpeed_str(const String &cmdArgs);
+void dealCmd(const String &cmdArgs);
 
 // Ref: https://examples.blynk.cc/?board=ESP32&shield=ESP32%20WiFi&example=GettingStarted%2FPushData
 // BLYNK_READ(V0)
-void Blynk_pushData()
+void Blynk_pushData(bool instant=false)
 {
-  static int tb = 0;
-  int t = millis();
-  if (t - tb > 500) {
-    tb = t;
-  } else {
-    return;
+  if (!instant) {
+    static int tb = 0;
+    int t = millis();
+    if (t - tb > 500) {
+      tb = t;
+    } else {
+      return;
+    }
   }
 
   // Blynk free plan only supports 5 widgets, while 1 label has limited width to display data
-  String data = getRobotDataShortString() + ";"+ String(pid_motorSpeed[0].feedback) +","+ String(pid_motorSpeed[1].feedback);
+  char data[256];
+  char format[] =
+R"(OP: %d
+Position: x=%.3f, y=%.3f, h=%.3f
+Velocity: linear=%.3f, angle=%.3f
+--------
+Cycle Time: %.3f
+Wheel 1: %s
+Wheel 2: %s)";
+  sprintf(data, format, digitalRead(pin_op), posX, posY, heading_deg, linearVelocity, angularVelocity_deg, deltaTime,
+    pid_motorSpeed[0].getShortString(1).c_str(), pid_motorSpeed[1].getShortString(2).c_str());
+  // String dataS(data);
+  // for (int i=0; i<2; i++)
+  //   dataS += "Wheel " + String(i+1) + ": " + pid_motorSpeed[i].getShortString(i + 1) + "\n";
   Blynk.virtualWrite(V0, data);
-  Serial.print("Sent Data: ");
-  Serial.println(data);
+  // Serial.print("Sent Data: ");
+  // Serial.println(data);
 }
+
 BLYNK_WRITE(V1)
 {
   int pinData = param.asInt();
   if (pinData == 1) {
-    setMotorSpeed_str("ms,255,255");
+    dealCmd("ms,255,255");
   } else {
-    setMotorSpeed_str("ms,0,0");
+    dealCmd("ms,0,0");
   }
   Serial.println("FW");
 }
@@ -156,9 +173,9 @@ BLYNK_WRITE(V2)
 {
   int pinData = param.asInt();
   if (pinData == 1) {
-    setMotorSpeed_str("ms,-255,-255");
+    dealCmd("ms,-255,-255");
   } else {
-    setMotorSpeed_str("ms,0,0");
+    dealCmd("ms,0,0");
   }
   Serial.println("BW");
 }
@@ -166,9 +183,9 @@ BLYNK_WRITE(V3)
 {
   int pinData = param.asInt();
   if (pinData == 1) {
-    setMotorSpeed_str("ms,-75,75");
+    dealCmd("ms,-75,75");
   } else {
-    setMotorSpeed_str("ms,0,0");
+    dealCmd("ms,0,0");
   }
   Serial.println("LR");
 }
@@ -176,11 +193,21 @@ BLYNK_WRITE(V4)
 {
   int pinData = param.asInt();
   if (pinData == 1) {
-    setMotorSpeed_str("ms,75,-75");
+    dealCmd("ms,75,-75");
   } else {
-    setMotorSpeed_str("ms,0,0");
+    dealCmd("ms,0,0");
   }
   Serial.println("RR");
+}
+BLYNK_WRITE(V5)
+{
+  int pinData = param.asInt();
+  if (pinData == 1) {
+    dealCmd("op,1,0");
+  } else {
+    dealCmd("op,0,0");
+  }
+  Serial.println("OP");
 }
 
 void sv_send_sse(const String& message) {
@@ -378,24 +405,32 @@ void serverOnSse() {
   }
 }
 
-void setMotorSpeed_str(const String &cmdArgs) {
+void dealCmd(const String &cmdArgs) {
   char cmd[512];
-  float speed1, speed2;
-  int matched = sscanf(cmdArgs.c_str(), "%2s,%f,%f", cmd, &speed1, &speed2);  //%s needs specify the width...
+  float arg1, arg2;
+  int matched = sscanf(cmdArgs.c_str(), "%2s,%f,%f", cmd, &arg1, &arg2);  //%s needs specify the width...
   if (matched != 3) {
     Serial.printf("cmdArgs parse failed, cmdArgs=%s, matched=%d\n", cmdArgs.c_str(), matched);
     stopLoop();
     return;
   } else {
-    Serial.printf("Received: %s,%.3f,%.3f\n", cmd, speed1, speed2);
-    setMotorSpeed(1, speed1);
-    setMotorSpeed(2, speed2);
+    Serial.printf("Received: %s,%.3f,%.3f\n", cmd, arg1, arg2);
+    if (strcmp(cmd, "op") == 0) {
+      digitalWrite(pin_op, arg1);
+      if (!bBlynk)
+        sv_send_sse("{\"operation\":" + String((int)arg1) + "}");
+      else
+        Blynk_pushData(true);
+    } else {
+      setMotorSpeed(1, arg1);
+      setMotorSpeed(2, arg2);
+    }
   }
 }
 
 void serverOnPost() {
   String cmdArgs = myserver.arg("plain");
-  setMotorSpeed_str(cmdArgs);
+  dealCmd(cmdArgs);
   myserver.send(200, "text/plain", "OK");  // send resp
 }
 
@@ -404,7 +439,8 @@ void setup() {
   Serial.println();
   Serial.println("---- setup ----");
 
-  pinMode(pin_ready, OUTPUT);
+  // pinMode(pin_ready, OUTPUT);
+  pinMode(pin_op, OUTPUT);
 
   // Motor pins setup
   pinMode(motor1_In1, OUTPUT);
@@ -428,8 +464,8 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(pi_DebugPID), DebugPID, RISING);
 
   motorSpeedMax = 0.5;  //$ m/s, used for setpoint speed.
-  pid_motorSpeed[0].setPID(2200, 75, 20);
-  pid_motorSpeed[1].setPID(2200, 75, 20);
+  pid_motorSpeed[0].setPID(1000, 75, 20);
+  pid_motorSpeed[1].setPID(1000, 75, 20);
   pid_motorSpeed[0].setLimit(0, 255);
   pid_motorSpeed[1].setLimit(0, 255);
 
@@ -511,13 +547,13 @@ void serverConnectState() {
   if (cnt_bf != cnt) {
     cnt_bf = cnt;
     if (cnt) {
+      // digitalWrite(pin_ready, 1);
       Serial.println("New Client");
-      digitalWrite(pin_ready, 1);
       for (int i=0; i<2; i++) {
         Serial.println(pid_motorSpeed[i].getPlotString(i + 1));  // print a set of initial zeros for plot
       }
     } else {
-      digitalWrite(pin_ready, 0);
+      // digitalWrite(pin_ready, 0);
       // client.stop();  // if client is disconnected, stop client
       Serial.println("Client Disconnected");
     }
@@ -540,7 +576,7 @@ void loop() {
     }
   } else {
     myserver.handleClient();
-    serverConnectState();
+    // serverConnectState();
   }
 
   appPidMotorSpeed();

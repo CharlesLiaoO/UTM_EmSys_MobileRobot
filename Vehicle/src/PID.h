@@ -113,12 +113,18 @@ public:
         error_last_last = other.error_last_last;
     }
 
-    // String getDataString() {
-    //     char tmp[512];
-    //     sprintf(tmp, "%.3f,%.3f,%.3f", setpoint, feedback, output);
-    //     String ret(tmp);
-    //     return ret;
-    // }
+    String getString(int prefix) {
+        char tmp[64];
+        itoa(prefix, tmp, 10);
+        return getString(tmp);
+    }
+    String getString(const char *prefix) {
+        String ret = String() + prefix + "_setpoint:" + String(setpoint, 3) + ", " +
+            prefix + "_feedback:" + String(feedback, 3) + ", " +
+            prefix + "_output:" + String(output, 3);
+        // Serial.println(ret);
+        return ret;
+    }
     String getShortString(int prefix) {
         char tmp[64];
         itoa(prefix, tmp, 10);
@@ -126,9 +132,9 @@ public:
     }
     String getShortString(const char *prefix) {
         char tmp[512];
-        sprintf(tmp, "(%.1f,%.1f)", setpoint, feedback);
+        sprintf(tmp, "(%.3f, %.3f, %.3f)", setpoint, feedback, output);
         String ret(tmp);
-        // ret.replace("P", prefix);
+        ret.replace("P", prefix);
         // Serial.println(ret);
         return ret;
     }
@@ -139,7 +145,7 @@ public:
     }
     String getJson(const char *prefix) {
         char tmp[512];
-        sprintf(tmp, R"({"P_setpoint":%.3f, "P_feedback":%.3f, "P_output":%.3f})", setpoint, feedback, output);
+        sprintf(tmp, R"({"P_setpoint":%.3f,"P_feedback":%.3f,"P_output":%.3f})", setpoint, feedback, output);
         String ret(tmp);
         ret.replace("P", prefix);
         // Serial.println(ret);
@@ -152,12 +158,7 @@ public:
         return getPlotString(tmp);
     }
     String getPlotString(const char *prefix) {
-        char tmp[512];
-        sprintf(tmp, ">\1_setpoint:%.3f,\1_feedback:%.3f,\1_output:%.3f", setpoint, feedback, output);  // > Format in VSCode Extension Serial Plotter: cannot '-' as var Name
-        // sprintf(tmp, "\1-setpoint:%.3f,\1-feedback:%.3f,\1-output:%.3f", setpoint, feedback, output);  // no > in Arduino IDE
-        String ret(tmp);
-        ret.replace("\1", prefix);
-        return ret;
+        return ">" + getString(prefix);
     }
 
     String getDataString_IE(int prefix) {
