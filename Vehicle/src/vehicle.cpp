@@ -1,8 +1,10 @@
 #include <Arduino.h>
-// #include <string.h>
 #include <WiFi.h>
 #include "PID.h"
-// #include "PID_v1.h"
+#include <BluetoothSerial.h>
+
+BluetoothSerial SerialBT;  // used as remote serial port for printing
+#define Serial SerialBT
 
 // WIFI AP & tcp server
 const char* ssid = "lch-EmSys_Vehicle";
