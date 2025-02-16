@@ -12,8 +12,8 @@ public:
     float output_max = FLT_MAX;
     float integral_limit = FLT_MAX;
     // 1.2 automatically by program
-    float target = 0;
-    float actual = 0;
+    float setpoint = 0;
+    float feedback = 0;
 
     // just for remember output
     float output = 0;
@@ -39,8 +39,8 @@ public:
     }
 
     float CalOutput_Pos() {
-        error = target - actual;
-        if (target == 0) {
+        error = setpoint - feedback;
+        if (setpoint == 0) {
             integral = 0;  // clear
             error_last = 0;
         }
@@ -52,7 +52,7 @@ public:
         output = Kp * error + Ki * integral + Kd * (error - error_last);
         if (printVars) {
             printVars = false;
-            Serial.printf("Kp=%f, error=%f, Ki=%f, integral=%f, Kd=%f, error_last=%f, output=%f\n", Kp, error, Ki, integral, Kd, error_last, output);
+            Serial.printf("Kp=%.3f, error=%.3f, Ki=%.3f, integral=%.3f, Kd=%.3f, error_last=%.3f, output=%.3f\n", Kp, error, Ki, integral, Kd, error_last, output);
         }
         if (output > output_max) output = output_max;
         else if (output < output_min) output = output_min;
@@ -62,7 +62,7 @@ public:
     }
 
     float CalOutput_Inc() {
-        error = target - actual;
+        error = setpoint - feedback;
 
         float output_dt = Kp * (error - error_last) + Ki * error + Kd * (error - 2*error_last + error_last_last);
         output += output_dt;
@@ -72,7 +72,7 @@ public:
         error_last_last = error_last;
         error_last = error;
 
-        if (target == 0) {
+        if (setpoint == 0) {
             output = 0;  // clear
         }
         return output;
@@ -91,7 +91,7 @@ public:
     }
 
     bool isSame_Main(const PID &other) {
-        if (target == other.target && actual == other.actual && output == other.output)
+        if (setpoint == other.setpoint && feedback == other.feedback && output == other.output)
             return true;
         else
             return false;
@@ -103,8 +103,8 @@ public:
             return false;
     }
     void assign_Main(const PID &other) {
-        target = other.target;
-        actual = other.actual;
+        setpoint = other.setpoint;
+        feedback = other.feedback;
         output = other.output;
     }
     void assign_IE(const PID &other) {
@@ -113,12 +113,44 @@ public:
         error_last_last = other.error_last_last;
     }
 
-    // String getDataString() {
-    //     char tmp[512];
-    //     sprintf(tmp, "%f,%f,%f", target, actual, output);
-    //     String ret(tmp);
-    //     return ret;
-    // }
+    String getString(int prefix) {
+        char tmp[64];
+        itoa(prefix, tmp, 10);
+        return getString(tmp);
+    }
+    String getString(const char *prefix) {
+        String ret = String() + prefix + "_setpoint:" + String(setpoint, 3) + ", " +
+            prefix + "_feedback:" + String(feedback, 3) + ", " +
+            prefix + "_output:" + String(output, 3);
+        // Serial.println(ret);
+        return ret;
+    }
+    String getShortString(int prefix) {
+        char tmp[64];
+        itoa(prefix, tmp, 10);
+        return getShortString(tmp);
+    }
+    String getShortString(const char *prefix) {
+        char tmp[512];
+        sprintf(tmp, "(%.3f, %.3f, %.3f)", setpoint, feedback, output);
+        String ret(tmp);
+        ret.replace("P", prefix);
+        // Serial.println(ret);
+        return ret;
+    }
+    String getJson(int prefix) {
+        char tmp[64];
+        itoa(prefix, tmp, 10);
+        return getJson(tmp);
+    }
+    String getJson(const char *prefix) {
+        char tmp[512];
+        sprintf(tmp, R"({"P_setpoint":%.3f,"P_feedback":%.3f,"P_output":%.3f})", setpoint, feedback, output);
+        String ret(tmp);
+        ret.replace("P", prefix);
+        // Serial.println(ret);
+        return ret;
+    }
 
     String getPlotString(int prefix) {
         char tmp[64];
@@ -126,12 +158,7 @@ public:
         return getPlotString(tmp);
     }
     String getPlotString(const char *prefix) {
-        char tmp[512];
-        sprintf(tmp, ">\1_target:%f,\1_actual:%f,\1_output:%f", target, actual, output);  // > Format in VSCode Extension Serial Plotter: cannot '-' as var Name
-        // sprintf(tmp, "\1-target:%f,\1-actual:%f,\1-output:%f", target, actual, output);  // no > in Arduino IDE
-        String ret(tmp);
-        ret.replace("\1", prefix);
-        return ret;
+        return ">" + getString(prefix);
     }
 
     String getDataString_IE(int prefix) {
@@ -141,7 +168,7 @@ public:
     }
     String getDataString_IE(const char *prefix) {
         char tmp[512];
-        sprintf(tmp, "\1_integral:%f,\1_error_last:%f,\1_error_last_last:%f", integral, error_last, error_last_last);
+        sprintf(tmp, "\1_integral:%.3f,\1_error_last:%.3f,\1_error_last_last:%.3f", integral, error_last, error_last_last);
         String ret(tmp);
         ret.replace("\1", prefix);
         return ret;
