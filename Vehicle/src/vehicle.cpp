@@ -1,6 +1,10 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include "PID.h"
+#include <WebServer.h>
+#include <LittleFS.h>
+#define FS LittleFS
+void printPartition();
 
 #include <BluetoothSerial.h>
 BluetoothSerial SerialBT;  // used as remote serial port for printing
@@ -13,9 +17,9 @@ bool ArduinoOTA_updating = false;
 void setup();
 void ArduinoOTASetup();
 
-// tcp server
-const int port = 2020;
-WiFiServer server(port);
+// web server
+WebServer server(80);  // http port
+WiFiClient sseClient;  // keep life span
 
 const int pin_ready = 2;
 
@@ -41,7 +45,6 @@ int encoder2_Count = 0;
 int encoder1_Count_b = 0;
 int encoder2_Count_b = 0;
 
-unsigned long prevTime = 0;      // To calculate elapsed time
 const int encoder_slots = 13;     // Number of slots in encoder disk
 const int gearRate = 90;
 const float wheelDiameter = 0.065;      // Wheel diameter in meter
@@ -95,6 +98,15 @@ void IRAM_ATTR DebugPID() {
   // Serial.println("DebugPID");
   pid_motorSpeed[0].printVars = true;
   pid_motorSpeed[1].printVars = true;
+}
+
+void sv_send_sse(const String& message) {
+  // Serial.println(message);
+  if (sseClient && sseClient.connected()) {
+    sseClient.print("data: ");  //DO NOT forget data: ...
+    sseClient.println(message);
+    sseClient.println();  // end data
+  }
 }
 
 // Function to set motor direction and speed
@@ -168,6 +180,7 @@ void appPidMotorSpeed() {
 
     if (mayPrint) {
       if (pid_bf[mi].isNotSame_Assign_Main(pid_motorSpeed[mi]))
+        // sv_send_sse(pid_motorSpeed[mi].getJson(mi + 1));
         Serial.println(pid_motorSpeed[mi].getPlotString(mi + 1));
       if (pid_bf[mi].isNotSame_Assign_IE(pid_motorSpeed[mi]))
         Serial.println(pid_motorSpeed[mi].getDataString_IE(mi + 1));
@@ -187,6 +200,7 @@ void calculateOdometry() {
 
   delay(cycTime);  // must delay, otherwise the deltaTime could be zero
   // Calculate time elapsed
+  static ulong prevTime = 0;
   unsigned long currentTime = millis();
   float deltaTime = (currentTime - prevTime) / 1000.0; // seconds
   prevTime = currentTime;
@@ -238,6 +252,12 @@ void calculateOdometry() {
 
   // Serial.printf("enc1=%d, enc2=%d, enc1/enc2=%f\n", encoder1_Count, encoder2_Count, float(encoder1_Count)/encoder2_Count);  // Not for wheel align
   Serial.printf("%.3fs -- Vel: lin=%.3f, ang=%.3f; Pos: x, y, h = %.3f, %.3f, %.3f\r\n", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
+
+  // data json to webpage
+  // char json[1024];
+  // sprintf(json, R"({"cyc_time":%.3f, "v_linear":%.3f, "v_angle":%.3f, "x":%.3f, "y":%.3f, "h":%.3f})", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
+  // // Serial.println(json);
+  // sv_send_sse(json);
 }
 
 bool bStopLoop = false;
@@ -246,12 +266,48 @@ void stopLoop(const char * msg=0) {
   if (msg)
     Serial.println(msg);
   Serial.println("Stop Loop");
+  digitalWrite(pin_ready, 0);
+}
+
+void serverOnSse() {
+  Serial.println("serverOnSse");
+  if (server.client()) {
+    sseClient = server.client();
+    sseClient.println("HTTP/1.1 200 OK");
+    sseClient.println("Content-Type: text/event-stream");
+    sseClient.println("Cache-Control: no-cache");
+    sseClient.println("Connection: keep-alive");
+    sseClient.println();  // end header
+    Serial.println("serverOnSse OK");
+  }
+}
+
+void serverOnPost() {
+  String cmdArgs = server.arg("plain");
+
+  char cmd[512];
+  float speed1, speed2;
+  int matched = sscanf(cmdArgs.c_str(), "%2s,%f,%f", cmd, &speed1, &speed2);  //%s needs specify the width...
+  if (matched != 3) {
+    Serial.printf("cmdArgs parse failed, cmdArgs=%s, matched=%d\n", cmdArgs.c_str(), matched);
+    stopLoop();
+    return;
+  } else {
+    Serial.printf("Received: %s,%.3f,%.3f\n", cmd, speed1, speed2);
+    setMotorSpeed(1, speed1);
+    setMotorSpeed(2, speed2);
+  }
+
+  server.send(200, "text/plain", "OK");  // send resp
 }
 
 void setup() {
+  digitalWrite(pin_ready, 0);
   Serial.begin(115200); // For debugging output
   Serial.println();
   Serial.println("---- setup ----");
+  // printPartition();
+  // return;
 
   WiFi.begin("R1216_2.4GHz", "r121612321");
   Serial.print("Connecting to WiFi");
@@ -260,6 +316,52 @@ void setup() {
     Serial.print(".");
   }
   Serial.println("\nConnected as " + WiFi.localIP().toString());
+
+  if (!FS.begin()) {
+    Serial.println("Failed to mount file system");
+    stopLoop();
+    return;
+  }
+
+  server.onNotFound([](){
+    server.send(404, "text/plain", "Error Address");
+  });
+
+  server.on("/", HTTP_GET, []() {
+    Serial.println("html started");
+    File file = FS.open("/webpage.html", "r");
+    if (!file) {
+      Serial.println("Failed to open file -html");
+      stopLoop();
+      return;
+    }
+    server.streamFile(file, "text/html");
+  });
+
+  server.on("/style.css", HTTP_GET, []() {
+    Serial.println("css started");
+    File file = FS.open("/style.css", "r");
+    if (!file) {
+      Serial.println("Failed to open file -style");
+      stopLoop();
+      return;
+    }
+    server.streamFile(file, "text/css");
+  });
+
+  server.on("/script.js", HTTP_GET, []() {
+    Serial.println("script started");
+    File file = FS.open("/script.js", "r");
+    if (!file) {
+      Serial.println("Failed to open file -script");
+      stopLoop();
+      return;
+    }
+    server.streamFile(file, "application/javascript");
+  });
+
+  server.on("/cmd", HTTP_POST, serverOnPost);
+  server.on("/events", HTTP_GET, serverOnSse);
 
   server.begin();
 
@@ -286,7 +388,7 @@ void setup() {
   pinMode(pi_DebugPID, INPUT_PULLDOWN);
   attachInterrupt(digitalPinToInterrupt(pi_DebugPID), DebugPID, RISING);
 
-  motorSpeedMax = 0.5;  //$ m/s, used for target speed.
+  motorSpeedMax = 0.5;  //$ m/s, used for setpoint speed.
   pid_motorSpeed[0].setPID(2200, 75, 20);
   pid_motorSpeed[1].setPID(2200, 75, 20);
   pid_motorSpeed[0].setLimit(0, 255);
@@ -298,8 +400,8 @@ void setup() {
   // Serial.println(ESP.getFreeHeap());
 
   Serial.println("---- setup finished ----");
+  digitalWrite(pin_ready, 1);
 
-  prevTime = millis();    // Initialize time
   // stopLoop();
 };
 
@@ -362,32 +464,6 @@ void DealClientData(WiFiClient *socket) {
   }
 }
 
-WiFiClient *socket = nullptr;
-void MultiClientProcess() {
-  if (!socket) {
-    *socket = server.accept();
-    if (socket->connected()) {
-      Serial.println("Connect to client OK");
-    } else {
-      socket->stop();
-      socket = nullptr;
-      Serial.println("Connect to client failed");
-    }
-  }
-
-  if (socket && socket->connected()) {
-    // Serial.println("Connected to client");
-  } else {
-      socket->stop();
-      socket = nullptr;
-      Serial.println("Disconnected");
-  }
-
-  if (socket && socket->available()) {
-    DealClientData(socket);
-  }
-}
-
 void loop() {
   ArduinoOTA.handle();
   if (ArduinoOTA_updating) {
@@ -400,30 +476,19 @@ void loop() {
     // while(1);
   }
 
-  WiFiClient client = server.accept();  // listen for incoming clients
-  if (client) {  // if you get a client,
-    Serial.println("New Client");
-    digitalWrite(pin_ready, 1);
-
-    for (int i=0; i<2; i++) {
-      Serial.println(pid_motorSpeed[i].getPlotString(i + 1));  // print a set of initial zeros for plot
-      Serial.println(pid_motorSpeed[i].getDataString_IE(i + 1));
-    }
-
-    while (client.connected()) {  // loop while the client's connected
-      if (client.available()) { // read data available
-        DealClientData(&client);
-      }
-      appPidMotorSpeed();
-      calculateOdometry();
-    }
-
-    digitalWrite(pin_ready, 0);
-    client.stop();  // if client is disconnected, stop client
-    Serial.println("Client Disconnected");
-  }
-
+  server.handleClient();
   appPidMotorSpeed();
   calculateOdometry();
 }
 
+void printPartition() {
+  Serial.println("---- printPartition ----");
+
+  esp_partition_iterator_t it = esp_partition_find(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, NULL);
+  while (it != NULL) {
+      const esp_partition_t* part = esp_partition_get(it);
+      Serial.printf("Name: %s, Type: %d, SubType: %d, Address: 0x%X, Size: %dKB\n",
+                    part->label, part->type, part->subtype, part->address, part->size / 1024);
+      it = esp_partition_next(it);
+  }
+}
