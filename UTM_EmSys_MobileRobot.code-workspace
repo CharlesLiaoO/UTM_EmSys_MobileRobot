@@ -15,6 +15,9 @@
 			"*.ino": "cpp",
 			"*.json": "jsonc",
 			"**/include/c++/**": "cpp",
-		}
+		},
+		"cSpell.words": [
+			"espota"
+		]
 	}
 }

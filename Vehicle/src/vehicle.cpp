@@ -1,14 +1,19 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include "PID.h"
-#include <BluetoothSerial.h>
 
+#include <BluetoothSerial.h>
 BluetoothSerial SerialBT;  // used as remote serial port for printing
 #define Serial SerialBT
 
-// WIFI AP & tcp server
-const char* ssid = "lch-EmSys_Vehicle";
-const char* password = "lch12321";
+// ref: https://github.com/espressif/arduino-esp32/tree/master/libraries/ArduinoOTA/examples
+#include <ArduinoOTA.h>
+bool ArduinoOTA_updating = false;
+
+void setup();
+void ArduinoOTASetup();
+
+// tcp server
 const int port = 2020;
 WiFiServer server(port);
 
@@ -248,10 +253,13 @@ void setup() {
   Serial.println();
   Serial.println("---- setup ----");
 
-  // Remove the password parameter, if you want the AP (Access Point) to be open
-  WiFi.softAP(ssid, password);
-  Serial.print("AP IP address: ");
-  Serial.println(WiFi.softAPIP());
+  WiFi.begin("R1216_2.4GHz", "r121612321");
+  Serial.print("Connecting to WiFi");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.print(".");
+  }
+  Serial.println("\nConnected as " + WiFi.localIP().toString());
 
   server.begin();
 
@@ -284,11 +292,59 @@ void setup() {
   pid_motorSpeed[0].setLimit(0, 255);
   pid_motorSpeed[1].setLimit(0, 255);
 
+  ArduinoOTASetup();
+  ArduinoOTA.begin();
+  // Serial.print("Free Heap: ");
+  // Serial.println(ESP.getFreeHeap());
+
   Serial.println("---- setup finished ----");
 
   prevTime = millis();    // Initialize time
   // stopLoop();
 };
+
+void ArduinoOTASetup()
+{
+  ArduinoOTA.setHostname("esp32-vehicle");
+  ArduinoOTA
+  .onStart([]() {
+    ArduinoOTA_updating = true;
+    String type;
+    if (ArduinoOTA.getCommand() == U_FLASH) {
+      type = "sketch";
+    } else {  // U_SPIFFS
+      type = "filesystem";
+    }
+
+    // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+    Serial.println("Start updating " + type);
+  })
+  .onEnd([]() {
+    Serial.println("\nOTA End");
+  })
+  // for performance, we don't print progress
+  // .onProgress([](unsigned int progress, unsigned int total) {
+  //   static ulong tb = 0;
+  //   ulong t = millis();
+  //   if (t - tb < 500)
+  //     return;
+  //   Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+  // })
+  .onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) {
+      Serial.println("Auth Failed");
+    } else if (error == OTA_BEGIN_ERROR) {
+      Serial.println("Begin Failed");
+    } else if (error == OTA_CONNECT_ERROR) {
+      Serial.println("Connect Failed");
+    } else if (error == OTA_RECEIVE_ERROR) {
+      Serial.println("Receive Failed");
+    } else if (error == OTA_END_ERROR) {
+      Serial.println("End Failed");
+    }
+  });
+}
 
 void DealClientData(WiFiClient *socket) {
   String cmdArgs = socket->readStringUntil('\n');
@@ -333,6 +389,11 @@ void MultiClientProcess() {
 }
 
 void loop() {
+  ArduinoOTA.handle();
+  if (ArduinoOTA_updating) {
+    return;
+  }
+
   if (bStopLoop) {
     delay(10);
     return;
@@ -365,3 +426,4 @@ void loop() {
   appPidMotorSpeed();
   calculateOdometry();
 }
+
