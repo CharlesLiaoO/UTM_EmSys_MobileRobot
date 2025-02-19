@@ -6,9 +6,14 @@
 #define FS LittleFS
 void printPartition();
 
-#include <BluetoothSerial.h>
-BluetoothSerial SerialBT;  // used as remote serial port for printing
-#define Serial SerialBT
+// #include <BluetoothSerial.h>
+// BluetoothSerial SerialBT;  // used as remote serial port for printing
+// #define Serial SerialBT
+
+WiFiServer tcpSerServer(12321);
+WiFiClient tcpSerCl;
+#define Use_tcpSer
+#define Serial tcpSerCl
 
 // ref: https://github.com/espressif/arduino-esp32/tree/master/libraries/ArduinoOTA/examples
 #include <ArduinoOTA.h>
@@ -303,7 +308,12 @@ void serverOnPost() {
 
 void setup() {
   digitalWrite(pin_ready, 0);
+
+#ifdef Use_tcpSer
+#else
   Serial.begin(115200); // For debugging output
+#endif
+
   Serial.println();
   Serial.println("---- setup ----");
   // printPartition();
@@ -312,10 +322,14 @@ void setup() {
   WiFi.begin("R1216_2.4GHz", "r121612321");
   Serial.print("Connecting to WiFi");
   while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
+    delay(500);
     Serial.print(".");
   }
   Serial.println("\nConnected as " + WiFi.localIP().toString());
+
+#ifdef Use_tcpSer
+  tcpSerServer.begin();
+#endif
 
   if (!FS.begin()) {
     Serial.println("Failed to mount file system");
@@ -465,6 +479,11 @@ void DealClientData(WiFiClient *socket) {
 }
 
 void loop() {
+  if (tcpSerCl) {  // == tcpSerCl.connected()
+  } else {
+    tcpSerCl = tcpSerServer.available();  // try get new tcpSerCl
+  }
+
   ArduinoOTA.handle();
   if (ArduinoOTA_updating) {
     return;
