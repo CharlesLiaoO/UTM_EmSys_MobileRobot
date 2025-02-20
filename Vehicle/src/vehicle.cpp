@@ -5,6 +5,8 @@
 #include <LittleFS.h>
 #define FS LittleFS
 void printPartition();
+// #include <Ticker.h>  // == Timer
+// hw_timer_t, timerAttachInterrupt()  timer interrupts
 
 // #include <BluetoothSerial.h>
 // BluetoothSerial SerialBT;  // used as remote serial port for printing
@@ -306,6 +308,10 @@ void serverOnPost() {
   server.send(200, "text/plain", "OK");  // send resp
 }
 
+void Task1(void *pvParameters);
+// void Task2(void *pvParameters) { while(1) loop();}  // call loop() in a task
+void Task2(void *pvParameters);
+
 void setup() {
   digitalWrite(pin_ready, 0);
 
@@ -417,6 +423,10 @@ void setup() {
   digitalWrite(pin_ready, 1);
 
   // stopLoop();
+  // Task,TaskName, StackSize(Byte), TaskParameters, Priority, TaskHandle, Core
+  // TaskHandle(created task handle, for task operation, here not used)
+  xTaskCreatePinnedToCore(Task1, "Task1", 1024, NULL, 1, nullptr, 0);
+  xTaskCreatePinnedToCore(Task2, "Task2", 4096, NULL, 1, nullptr, 1);
 };
 
 void ArduinoOTASetup()
@@ -478,7 +488,7 @@ void DealClientData(WiFiClient *socket) {
   }
 }
 
-void loop() {
+void loopForMultiTask() {
   if (tcpSerCl) {  // == tcpSerCl.connected()
   } else {
     tcpSerCl = tcpSerServer.available();  // try get new tcpSerCl
@@ -500,6 +510,10 @@ void loop() {
   calculateOdometry();
 }
 
+void loop() {
+  delay(1000);
+}
+
 void printPartition() {
   Serial.println("---- printPartition ----");
 
@@ -509,5 +523,28 @@ void printPartition() {
       Serial.printf("Name: %s, Type: %d, SubType: %d, Address: 0x%X, Size: %dKB\n",
                     part->label, part->type, part->subtype, part->address, part->size / 1024);
       it = esp_partition_next(it);
+  }
+}
+
+void Task1(void *pvParameters) {
+  for (;;) {
+    setMotorSpeed(1, 75);
+    setMotorSpeed(2, -75);
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    setMotorSpeed(1, 0);
+    setMotorSpeed(2, -0);
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    setMotorSpeed(1, -75);
+    setMotorSpeed(2, 75);
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    setMotorSpeed(1, 0);
+    setMotorSpeed(2, -0);
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
+  }
+}
+
+void Task2(void *pvParameters) {
+  for (;;) {
+    loopForMultiTask();
   }
 }
