@@ -512,6 +512,9 @@ void loopForMultiTask() {
 
 void loop() {
   delay(1000);
+    Serial.printf("Free heap memory: %d bytes\n", esp_get_free_heap_size());  // 178 bytes
+    Serial.printf("Largest free block: %d bytes\n", heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));  // 110 bytes
+
 }
 
 void printPartition() {
