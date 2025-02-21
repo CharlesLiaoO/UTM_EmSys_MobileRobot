@@ -194,6 +194,10 @@ void appPidMotorSpeed() {
     if (pwm_bf[mi] == pwm)
       continue;  // not return!!
     pwm_bf[mi] = pwm;
+    if (pid_motorSpeed[mi].setpoint == 0) {  // brake mode
+      analogWrite(motorPin[mi].in_pwm, 255);
+      continue;
+    }
     analogWrite(motorPin[mi].in_pwm, pwm);
   }
 }
