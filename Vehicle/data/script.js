@@ -13,8 +13,8 @@ function btnDeal(btn)
     cmd = ""
     switch (btn) {
         case '0': cmd = "ms,0,0"; break;
-        case 'u': cmd = "ms,255,255"; break;
-        case 'd': cmd = "ms,-255,-255"; break;
+        case 'u': cmd = "ms,150,150"; break;
+        case 'd': cmd = "ms,-150,-150"; break;
         case 'l': cmd = "ms,-75,75"; break;
         case 'r': cmd = "ms,75,-75"; break;
     }
