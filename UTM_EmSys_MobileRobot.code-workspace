@@ -16,5 +16,15 @@
 		"cSpell.words": [
 			"espota"
 		]
+	},
+	"launch": {
+		"configurations": [
+			{
+				"type": "chrome",
+				"name": "http://127.0.0.1:3000/data/webpage.html",
+				"request": "launch",
+				"url": "http://127.0.0.1:3000/data/webpage.html"
+			}
+		]
 	}
 }

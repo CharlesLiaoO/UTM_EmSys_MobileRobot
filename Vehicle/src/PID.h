@@ -132,9 +132,8 @@ public:
     }
     String getShortString(const char *prefix) {
         char tmp[512];
-        sprintf(tmp, "(%.3f, %.3f, %.3f)", setpoint, feedback, output);
+        sprintf(tmp, "%.3f,%.3f,%.3f", setpoint, feedback, output);
         String ret(tmp);
-        ret.replace("P", prefix);
         // Serial.println(ret);
         return ret;
     }

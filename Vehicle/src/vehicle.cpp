@@ -107,10 +107,13 @@ void IRAM_ATTR DebugPID() {
 
 void sv_send_sse(const String& message) {
   // Serial.println(message);
-  if (sseClient && sseClient.connected()) {
+  if (sseClient.connected()) {
+    // int t = esp_timer_get_time();
     sseClient.print("data: ");  //DO NOT forget data: ...
     sseClient.println(message);
     sseClient.println();  // end data
+    // int tn = esp_timer_get_time();
+    // Serial.println(tn-t);  // tcp msg: 10ms...
   }
 }
 
@@ -162,6 +165,18 @@ void setMotorSpeed(int motor, float speed) {
   pid_motorSpeed[mi].setpoint = motorSpeedMax * pwm / pwmMax;
 }
 
+String getPidPlotStr() {
+  char tmp[512];
+  sprintf(tmp, R"(<{"1_setpoint":%.3f,"1_feedback":%.3f,"1_output":%.3f,"2_setpoint":%.3f,"2_feedback":%.3f,"2_output":%.3f})",
+    pid_motorSpeed[0].setpoint,
+    pid_motorSpeed[0].feedback,
+    pid_motorSpeed[0].output,
+    pid_motorSpeed[1].setpoint,
+    pid_motorSpeed[1].feedback,
+    pid_motorSpeed[1].output
+  );
+  return tmp;
+}
 
 void appPidMotorSpeed() {
   if (!usePid)
@@ -170,35 +185,34 @@ void appPidMotorSpeed() {
   static int pwm_bf[2] = {
     0, 0
   };
+  int pwm[2];
+  for (int mi=0; mi<2; mi++) {
+    // pwm[mi] = pid_motorSpeed[mi].CalOutput_Inc();
+    pwm[mi] = pid_motorSpeed[mi].CalOutput_Pos();
+  }
 
   static PID pid_bf[2];  // just for debug
-  static int pt_b = 0;
+  static ulong pt_b = 0;
   bool mayPrint = false;
-  int pt = millis();
+  ulong pt = millis();
   if (pt - pt_b > printCycTime) {
     pt_b = pt;
     mayPrint = true;
   }
+  if (mayPrint && (pid_bf[0].isNotSame_Assign_Main(pid_motorSpeed[0]) || pid_bf[1].isNotSame_Assign_Main(pid_motorSpeed[1]))) {
+    String msg = getPidPlotStr();
+    sv_send_sse(msg);
+  }
+
   for (int mi=0; mi<2; mi++) {
-    // int pwm = pid_motorSpeed[mi].CalOutput_Inc();
-    int pwm = pid_motorSpeed[mi].CalOutput_Pos();
-
-    if (mayPrint) {
-      if (pid_bf[mi].isNotSame_Assign_Main(pid_motorSpeed[mi]))
-        // sv_send_sse(pid_motorSpeed[mi].getJson(mi + 1));
-        Serial.println(pid_motorSpeed[mi].getPlotString(mi + 1));
-      if (pid_bf[mi].isNotSame_Assign_IE(pid_motorSpeed[mi]))
-        Serial.println(pid_motorSpeed[mi].getDataString_IE(mi + 1));
-    }
-
-    if (pwm_bf[mi] == pwm)
+    if (pwm_bf[mi] == pwm[mi])
       continue;  // not return!!
-    pwm_bf[mi] = pwm;
+    pwm_bf[mi] = pwm[mi];
     if (pid_motorSpeed[mi].setpoint == 0) {  // brake mode
       analogWrite(motorPin[mi].in_pwm, 255);
       continue;
     }
-    analogWrite(motorPin[mi].in_pwm, pwm);
+    analogWrite(motorPin[mi].in_pwm, pwm[mi]);
   }
 }
 
@@ -260,13 +274,14 @@ void calculateOdometry() {
   pt_b = pt;
 
   // Serial.printf("enc1=%d, enc2=%d, enc1/enc2=%f\n", encoder1_Count, encoder2_Count, float(encoder1_Count)/encoder2_Count);  // Not for wheel align
-  Serial.printf("%.3fs -- Vel: lin=%.3f, ang=%.3f; Pos: x, y, h = %.3f, %.3f, %.3f\r\n", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
+  // Serial.printf("%.3fs -- Vel: lin=%.3f, ang=%.3f; Pos: x, y, h = %.3f, %.3f, %.3f\r\n", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
 
   // data json to webpage
-  // char json[1024];
-  // sprintf(json, R"({"cyc_time":%.3f, "v_linear":%.3f, "v_angle":%.3f, "x":%.3f, "y":%.3f, "h":%.3f})", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
-  // // Serial.println(json);
-  // sv_send_sse(json);
+  char json[1024];
+  sprintf(json, R"({"cyc_time":%.3f, "v_linear":%.3f, "v_angle":%.3f, "x":%.3f, "y":%.3f, "h":%.3f})", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
+
+  // Serial.println(json);
+  sv_send_sse(json);
 }
 
 bool bStopLoop = false;
@@ -310,6 +325,27 @@ void serverOnPost() {
   server.send(200, "text/plain", "OK");  // send resp
 }
 
+void serverRegPathHandle(const String &path, String pathFile=String()) {
+  if (pathFile.isEmpty())
+    pathFile = path;
+  server.on(path, HTTP_GET, [pathFile, path]() {
+    File file = FS.open(pathFile, "r");
+    if (!file) {
+      Serial.printf("Failed to open file '%s' for '%s'\n", pathFile.c_str(), path.c_str());
+      stopLoop();
+      return;
+    }
+    auto suffix = pathFile.substring(pathFile.lastIndexOf(".") + 1);
+    if (suffix == "html")
+      server.streamFile(file, "text/html");
+    else if (suffix == "css")
+      server.streamFile(file, "text/css");
+    else if (suffix == "js") {
+      server.streamFile(file, "application/javascript");
+    }
+  });
+}
+
 void setup() {
   digitalWrite(pin_ready, 0);
 
@@ -342,41 +378,13 @@ void setup() {
   }
 
   server.onNotFound([](){
-    server.send(404, "text/plain", "Error Address");
+    server.send(404, "text/plain", "---- Error Address! ----");
   });
 
-  server.on("/", HTTP_GET, []() {
-    Serial.println("html started");
-    File file = FS.open("/webpage.html", "r");
-    if (!file) {
-      Serial.println("Failed to open file -html");
-      stopLoop();
-      return;
-    }
-    server.streamFile(file, "text/html");
-  });
-
-  server.on("/style.css", HTTP_GET, []() {
-    Serial.println("css started");
-    File file = FS.open("/style.css", "r");
-    if (!file) {
-      Serial.println("Failed to open file -style");
-      stopLoop();
-      return;
-    }
-    server.streamFile(file, "text/css");
-  });
-
-  server.on("/script.js", HTTP_GET, []() {
-    Serial.println("script started");
-    File file = FS.open("/script.js", "r");
-    if (!file) {
-      Serial.println("Failed to open file -script");
-      stopLoop();
-      return;
-    }
-    server.streamFile(file, "application/javascript");
-  });
+  serverRegPathHandle("/", "/webpage.html");
+  serverRegPathHandle("/style.css");
+  serverRegPathHandle("/chart.js");
+  serverRegPathHandle("/script.js");
 
   server.on("/cmd", HTTP_POST, serverOnPost);
   server.on("/events", HTTP_GET, serverOnSse);
