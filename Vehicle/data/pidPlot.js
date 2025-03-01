@@ -14,7 +14,7 @@ let xVisibleRange = [0, maxVisiblePoints];
 
 let layout = {
     title: {  // title of graph
-        text: "Pid Parameters",
+        text: "PID Parameters",
         automargin: true,
         font: { family: "Arial"},  //default one lead to cutting of edge
     },
@@ -25,16 +25,19 @@ let layout = {
         range: xVisibleRange
     },
     yaxis: {
-        title: { text: "setpoint, feedback"},  // cannot set title text horizontal easily
+        title: {  // cannot set title text horizontal easily
+            text: "setpoint, feedback",
+            // standoff: 10,  // no effect
+        },
         showgrid: true,
-        range: [0, 1],  // [0, null] can auto adjust upper bound, but 0 is not at same pos with 0 of y2
+        range: [0, 0.5],  // [0, null] can auto adjust upper bound, but 0 is not at same pos with 0 of y2
     },
     yaxis2: {
         title: { text: "output"},
         showgrid: false,
         overlaying: "y",  // overlay 'y' axis, otherwise override
         side: "right",
-        range: [0, 255]
+        range: [0, 260]
     },
     legend: {
         orientation: "h",
@@ -42,7 +45,14 @@ let layout = {
         yanchor: "bottom",
         x: 0.5,
         y: 1.05
-    }
+    },
+    margin: {
+        pad: 5,  //padding (in px) between the plotting area and the axis lines
+        l: 50,
+        r: 50,
+        // t: 0,
+        b: 30  // default is too big (100 px)
+    },
 };
 
 // ref: https://plotly.com/javascript/reference/scatter/#scatter-line-dash

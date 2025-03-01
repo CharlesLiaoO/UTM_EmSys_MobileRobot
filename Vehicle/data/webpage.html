@@ -1,149 +1,545 @@
 <!DOCTYPE html>
+<html>
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>lch-EmSys_Vehicle Control</title>
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="index,follow" />
+    <meta name="generator" content="GrapesJS Studio" />
     <script src="script.js"></script>
     <!-- from plotly v3, must specify version -->
     <script src="https://cdn.plot.ly/plotly-basic-3.0.1.min.js" charset="utf-8"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+        }
+
+        .gjs-heading {
+            margin: 0;
+            color: rgba(29, 40, 55, 1);
+        }
+
+        .gjs-link {
+            vertical-align: top;
+            max-width: 100%;
+            display: inline-block;
+            text-decoration: none;
+            color: inherit;
+            transition: color 0.3s ease 0s;
+        }
+
+        .text-content {
+            line-height: 20px;
+        }
+
+        .text-main-content {
+            line-height: 30px;
+            font-size: 1.2rem;
+        }
+
+        #iau9 {
+            font-family: Arial, Helvetica, sans-serif;
+            color: #475569;
+        }
+
+        .gjs-grid-column.feature-item {
+            padding-top: 15px;
+            padding-right: 15px;
+            padding-bottom: 15px;
+            padding-left: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-width: 30%;
+        }
+
+        .gjs-grid-column.testimonial-item {
+            padding-top: 15px;
+            padding-right: 15px;
+            padding-bottom: 15px;
+            padding-left: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-width: 45%;
+            background-color: rgba(247, 247, 247, 0.23);
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            border-bottom-right-radius: 5px;
+            border-bottom-left-radius: 5px;
+            align-items: flex-start;
+            border-top-width: 1px;
+            border-right-width: 1px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+            border-top-style: solid;
+            border-right-style: solid;
+            border-bottom-style: solid;
+            border-left-style: solid;
+            border-top-color: rgba(0, 0, 0, 0.06);
+            border-right-color: rgba(0, 0, 0, 0.06);
+            border-bottom-color: rgba(0, 0, 0, 0.06);
+            border-left-color: rgba(0, 0, 0, 0.06);
+        }
+
+        .gjs-button {
+            vertical-align: top;
+            max-width: 100%;
+            display: inline-block;
+            text-decoration: none;
+            color: white;
+            padding-right: 15px;
+            padding-bottom: 10px;
+            padding-left: 15px;
+            background-color: rgb(36, 99, 235);
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            border-bottom-right-radius: 5px;
+            border-bottom-left-radius: 5px;
+            padding-top: 10px;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .gjs-text-blue {
+            color: rgb(36, 99, 235);
+        }
+
+        .gjs-link:hover {
+            color: rgb(36, 99, 235);
+            text-decoration: underline;
+        }
+
+        .gjs-icon.gjs-feature-icon {
+            padding-top: 10px;
+            padding-right: 10px;
+            padding-bottom: 10px;
+            padding-left: 10px;
+            background-color: rgb(36, 99, 235);
+            color: white;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;
+            border-bottom-left-radius: 10px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+        }
+
+        .gjs-custom-code {
+            padding: 5px;
+        }
+
+        #i2uku {
+            text-align: center;
+            display: none;
+        }
+
+        .gjs-grid-column {
+            flex: 1 1 0%;
+            padding: 5px 0;
+        }
+
+        .gjs-grid-row {
+            display: flex;
+            justify-content: flex-start;
+            align-items: stretch;
+            flex-direction: row;
+            min-height: auto;
+            padding: 10px 0;
+        }
+
+        #i1ai7b {
+            flex: 0 1 auto;
+            padding-left: 20px;
+        }
+
+        #ihn5g3 {
+            padding-right: 10px;
+            margin-top: 5px;
+            margin-right: 5px;
+            margin-bottom: -5px;
+            margin-left: 5px;
+            padding-left: 10px;
+            flex: 0 0 auto;
+        }
+
+        #irl3bu {
+            padding-left: 10px;
+            padding-right: 10px;
+            align-items: center;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+            align-content: space-around;
+        }
+
+        #in6qqk {
+            max-width: 800px;
+            min-width: 500px;
+            min-height: 300px;
+        }
+
+        #i6mgi1 {
+            grid-template-columns: 50px 50px 50px;
+            grid-template-rows: 50px 50px 50px;
+            gap: 10px;
+            display: grid;
+            place-content: center;
+        }
+
+        #ii7awv {
+            grid-area: 1 / 2 / 2 / 3;
+        }
+
+        #i42e0x {
+            grid-area: 3 / 2 / 4 / 3;
+        }
+
+        #itbyp7 {
+            grid-area: 2 / 1 / 3 / 2;
+        }
+
+        #im24ej {
+            grid-area: 2 / 3 / 3 / 4;
+        }
+
+        #i8to6k {
+            grid-area: 2 / 2 / 3 / 3;
+        }
+
+        #iekai {
+            text-align: left;
+        }
+
+        #robot_table {
+            width: 250px;
+        }
+
+        #i91nk {
+            border-top-style: solid;
+            border-right-style: none;
+            border-bottom-style: solid;
+            border-left-style: none;
+            border-top-width: 2px;
+            border-right-width: 2px;
+            border-bottom-width: 2px;
+            border-left-width: 2px;
+        }
+
+        #ijvo1 {
+            border-bottom-style: solid;
+            border-top-width: 1px;
+            border-right-width: 1px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+        }
+
+        #i0xv7 {
+            border-bottom-style: solid;
+            border-top-width: 1px;
+            border-right-width: 1px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+        }
+
+        #v_angle {
+            border-bottom-style: solid;
+            border-top-width: 1px;
+            border-right-width: 1px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+        }
+
+        #v_linear {
+            border-bottom-style: solid;
+            border-top-width: 1px;
+            border-right-width: 1px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+        }
+
+        #il9xz {
+            border-bottom-style: solid;
+            border-top-width: 1px;
+            border-right-width: 1px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+        }
+
+        #ijzgo {
+            border-top-style: solid;
+            border-right-style: none;
+            border-bottom-style: solid;
+            border-left-style: none;
+            border-top-width: 2px;
+            border-right-width: 2px;
+            border-bottom-width: 2px;
+            border-left-width: 2px;
+        }
+
+        #y {
+            border-bottom-style: solid;
+            border-top-width: 1px;
+            border-right-width: 1px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+        }
+
+        #ilghm {
+            border-top-style: solid;
+            border-right-style: none;
+            border-bottom-style: solid;
+            border-left-style: none;
+            border-top-width: 2px;
+            border-right-width: 2px;
+            border-bottom-width: 2px;
+            border-left-width: 2px;
+        }
+
+        #imgvv {
+            border-bottom-style: solid;
+            border-top-width: 1px;
+            border-right-width: 1px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+        }
+
+        #cyc_time {
+            border-bottom-style: solid;
+            border-top-width: 1px;
+            border-right-width: 1px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+        }
+
+        #i4vtd {
+            border-bottom-style: solid;
+            border-top-width: 1px;
+            border-right-width: 1px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+        }
+
+        #i3xvw {
+            border-bottom-style: solid;
+            border-top-width: 1px;
+            border-right-width: 1px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+        }
+
+        #imjr3 {
+            border-bottom-style: solid;
+            border-top-width: 1px;
+            border-right-width: 1px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+        }
+
+        #ihfrq {
+            border-bottom-style: solid;
+            border-top-width: 1px;
+            border-right-width: 1px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+        }
+
+        #ivio6 {
+            border-bottom-style: solid;
+            border-top-width: 1px;
+            border-right-width: 1px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+        }
+
+        #x {
+            border-bottom-style: solid;
+            border-top-width: 1px;
+            border-right-width: 1px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+        }
+
+        #iy85o {
+            border-bottom-style: solid;
+            border-top-width: 1px;
+            border-right-width: 1px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+        }
+
+        #i9jel {
+            border-bottom-style: solid;
+            border-top-width: 1px;
+            border-right-width: 1px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+        }
+
+        #id17g {
+            border-bottom-style: solid;
+            border-top-width: 1px;
+            border-right-width: 1px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+        }
+
+        #h {
+            border-bottom-style: solid;
+            border-top-width: 1px;
+            border-right-width: 1px;
+            border-bottom-width: 1px;
+            border-left-width: 1px;
+        }
+
+        #i2kktr {
+            flex: 0 1 auto;
+            padding-right: 5px;
+            padding-left: 5px;
+        }
+
+        @media (max-width: 992px) {
+            .gjs-grid-row {
+                flex-direction: column;
+            }
+
+            #irl3bu {
+                flex-direction: row;
+            }
+        }
+
+        @media (max-width: 920px) {
+            .gjs-grid-row {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #in6qqk {
+                min-width: 300px;
+            }
+        }
+    </style>
 </head>
-<body>
-    <div class="container-fluid">
-        <div class="row-fluid">
-            <div class="span12">
-                <h2 class="text-center" style="text-align: center;">
-                    <strong>lch-VehicleControl</strong>
-                </h2>
+
+<body id="iau9">
+    <h2 id="i2uku" class="text-center"><strong id="iravg">lch-VehicleControl</strong></h2>
+    <div id="irl3bu" class="gjs-grid-row">
+        <div id="in6qqk" class="gjs-grid-column">
+            <div id="ijbiu1" class="gjs-custom-code">
+                <div id="motorChart">
+                    <script src="pidPlot.js"></script>
+                </div>
             </div>
         </div>
-        <div class="row-fluid">
-            <div class="span4" style="align-items: center;">
-                <div id="motorChart"></div>
-                <script src="pidPlot.js"></script>
-            </div>
-            <div class="span8">
-                <table id="robot">
-                    <thead>
-                        <tr>
-                            <th>
-                                Name
-                            </th>
-                            <th>
-                                Value
-                            </th>
-                            <th>
-                                Unit
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>
-                                cyc_time
-                            </td>
-                            <td id="cyc_time">
-                                0
-                            </td>
-                            <td>
-                                s
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                v_linear
-                            </td>
-                            <td id="v_linear">
-                                0
-                            </td>
-                            <td>
-                                m/s
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                v_angle
-                            </td>
-                            <td id="v_angle">
-                                0
-                            </td>
-                            <td>
-                                deg/s
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                x
-                            </td>
-                            <td id="x">
-                                0
-                            </td>
-                            <td>
-                                m
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                y
-                            </td>
-                            <td id="y">
-                                0
-                            </td>
-                            <td>
-                                m
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                h
-                            </td>
-                            <td id="h">
-                                0
-                            </td>
-                            <td>
-                                deg
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="row-fluid">
-            <table class="dir">
-                <tbody>
-                    <tr>
-                        <td>
+        <div id="i1ai7b" class="gjs-grid-column">
+            <table id="robot_table">
+                <thead id="iekai">
+                    <tr id="i6lqz">
+                        <th id="i91nk">
+                            Name
+                        </th>
+                        <th id="ijzgo">
+                            Value
+                        </th>
+                        <th id="ilghm">
+                            Unit
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="ic46f">
+                    <tr id="iqjlj">
+                        <td id="i4vtd">
+                            cyc_time
                         </td>
-                        <td>
-                            <button class="btn" type="button" onpointerdown="btnDeal('u')" onpointerup="btnDeal('0')">↑</button>
+                        <td id="cyc_time">
+                            0
                         </td>
-                        <td>
+                        <td id="i3xvw">
+                            s
                         </td>
                     </tr>
                     <tr>
-                        <td>
-                            <button class="btn" type="button" onpointerdown="btnDeal('l')" onpointerup="btnDeal('0')">←</button>
+                        <td id="il9xz">
+                            v_linear
                         </td>
-                        <td>
+                        <td id="v_linear">
+                            0
                         </td>
-                        <td>
-                            <button class="btn" type="button" onpointerdown="btnDeal('r')" onpointerup="btnDeal('0')">→</button>
+                        <td id="imjr3">
+                            m/s
                         </td>
                     </tr>
                     <tr>
-                        <td>
+                        <td id="imgvv">
+                            v_angle
                         </td>
-                        <td>
-                            <button class="btn" type="button" onpointerdown="btnDeal('d')" onpointerup="btnDeal('0')">↓</button>
+                        <td id="v_angle">
+                            0
                         </td>
-                        <td>
+                        <td id="ihfrq">
+                            deg/s
+                        </td>
+                    </tr>
+                    <tr>
+                        <td id="ivio6">
+                            x
+                        </td>
+                        <td id="x">
+                            0
+                        </td>
+                        <td id="iy85o">
+                            m
+                        </td>
+                    </tr>
+                    <tr>
+                        <td id="i0xv7">
+                            y
+                        </td>
+                        <td id="y">
+                            0
+                        </td>
+                        <td id="i9jel">
+                            m
+                        </td>
+                    </tr>
+                    <tr>
+                        <td id="id17g">
+                            h
+                        </td>
+                        <td id="h">
+                            0
+                        </td>
+                        <td id="ijvo1">
+                            deg
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
-        <p id="debugMsg">
-            --debug message--
-        </p>
+        <div id="i2kktr" class="gjs-grid-column">
+            <div id="iz3pt3" class="gjs-custom-code">
+                <div id="i6mgi1">
+                    <button type="button" id="ii7awv" onpointerup="btnDeal('0')" onpointerdown="btnDeal('u')">↑</button><button type="button" id="i42e0x" onpointerup="btnDeal('0')" onpointerdown="btnDeal('d')">↓</button><button type="button" id="itbyp7" onpointerup="btnDeal('0')" onpointerdown="btnDeal('l')">←</button><button type="button" id="im24ej" onpointerup="btnDeal('0')" onpointerdown="btnDeal('r')">→</button><button type="button" id="i8to6k">OP</button>
+                </div>
+            </div>
+        </div>
+        <div id="ihn5g3" class="gjs-grid-column">
+            <p id="debugMsg">
+                --debug message--
+            </p>
+        </div>
     </div>
 </body>
+
+</html>
