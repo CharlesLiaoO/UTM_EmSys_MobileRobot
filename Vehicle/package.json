@@ -1,0 +1,6 @@
+// created by `npm install --save-dev @types/plotly.js`
+{
+  "devDependencies": {
+    "@types/plotly.js": "^2.35.2"
+  }
+}

@@ -4,8 +4,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>lch-EmSys_Vehicle Control</title>
     <link rel="stylesheet" type="text/css" href="style.css">
-    <script src="chart.js"></script>
     <script src="script.js"></script>
+    <!-- from plotly v3, must specify version -->
+    <script src="https://cdn.plot.ly/plotly-basic-3.0.1.min.js" charset="utf-8"></script>
 </head>
 <body>
     <div class="container-fluid">
@@ -18,7 +19,8 @@
         </div>
         <div class="row-fluid">
             <div class="span4" style="align-items: center;">
-                <canvas id="motorChart"></canvas>
+                <div id="motorChart"></div>
+                <script src="pidPlot.js"></script>
             </div>
             <div class="span8">
                 <table id="robot">

@@ -105,7 +105,7 @@ void IRAM_ATTR DebugPID() {
   pid_motorSpeed[1].printVars = true;
 }
 
-void sv_send_sse(const String& message) {
+void svSendSse(const String& message) {
   // Serial.println(message);
   if (sseClient.connected()) {
     // int t = esp_timer_get_time();
@@ -167,7 +167,7 @@ void setMotorSpeed(int motor, float speed) {
 
 String getPidPlotStr() {
   char tmp[512];
-  sprintf(tmp, R"(<{"1_setpoint":%.3f,"1_feedback":%.3f,"1_output":%.3f,"2_setpoint":%.3f,"2_feedback":%.3f,"2_output":%.3f})",
+  sprintf(tmp, R"(<[%.3f,%.3f,%.3f,%.3f,%.3f,%.3f])",
     pid_motorSpeed[0].setpoint,
     pid_motorSpeed[0].feedback,
     pid_motorSpeed[0].output,
@@ -201,7 +201,7 @@ void appPidMotorSpeed() {
   }
   if (mayPrint && (pid_bf[0].isNotSame_Assign_Main(pid_motorSpeed[0]) || pid_bf[1].isNotSame_Assign_Main(pid_motorSpeed[1]))) {
     String msg = getPidPlotStr();
-    sv_send_sse(msg);
+    svSendSse(msg);
   }
 
   for (int mi=0; mi<2; mi++) {
@@ -281,7 +281,7 @@ void calculateOdometry() {
   sprintf(json, R"({"cyc_time":%.3f, "v_linear":%.3f, "v_angle":%.3f, "x":%.3f, "y":%.3f, "h":%.3f})", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
 
   // Serial.println(json);
-  sv_send_sse(json);
+  svSendSse(json);
 }
 
 bool bStopLoop = false;
@@ -383,7 +383,7 @@ void setup() {
 
   serverRegPathHandle("/", "/webpage.html");
   serverRegPathHandle("/style.css");
-  serverRegPathHandle("/chart.js");
+  serverRegPathHandle("/pidPlot.js");
   serverRegPathHandle("/script.js");
 
   server.on("/cmd", HTTP_POST, serverOnPost);
