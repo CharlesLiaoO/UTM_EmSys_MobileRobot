@@ -159,7 +159,7 @@ void setMotorSpeed(int motor, float speed) {
     return;
   }
 
-  if (mi == 1) pwm *= 0.947;  //$ wheel align
+  // if (mi == 1) pwm *= 0.947;  //$ wheel align
 
   const int pwmMax = 255;
   pid_motorSpeed[mi].setpoint = motorSpeedMax * pwm / pwmMax;
@@ -415,8 +415,8 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(pi_DebugPID), DebugPID, RISING);
 
   motorSpeedMax = 0.5;  //$ m/s, used for setpoint speed.
-  pid_motorSpeed[0].setPID(2200, 75, 20);
-  pid_motorSpeed[1].setPID(2200, 75, 20);
+  pid_motorSpeed[0].setPID(750, 75, 20);
+  pid_motorSpeed[1].setPID(750, 75, 20);
   pid_motorSpeed[0].setLimit(0, 255);
   pid_motorSpeed[1].setLimit(0, 255);
 
