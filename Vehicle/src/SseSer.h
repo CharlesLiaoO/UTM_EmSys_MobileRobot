@@ -16,6 +16,7 @@ public:
         sseClient->print("data: ");  //DO NOT forget data: ...
         size_t n = sseClient->write(buffer, size);
         sseClient->println();  // end data
+        sseClient->flush();
         return n;
     }
 

@@ -301,6 +301,7 @@ void serverOnSse() {
   Serial.println("serverOnSse");
   if (server.client()) {
     sseClient = server.client();
+    sseClient.setNoDelay(true);  // No Nagle algorithm
     sseClient.println("HTTP/1.1 200 OK");
     sseClient.println("Content-Type: text/event-stream");
     sseClient.println("Cache-Control: no-cache");
@@ -370,6 +371,7 @@ void setup() {
     Serial.print(".");
   }
   Serial.println("\nConnected as " + WiFi.localIP().toString());
+  WiFi.setSleep(false); // Improve real-time performance
 
 #ifdef Use_tcpSer
   tcpSerServer.begin();
