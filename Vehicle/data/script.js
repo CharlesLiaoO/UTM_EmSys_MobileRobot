@@ -59,23 +59,23 @@ function btnDeal(btn)
     var vr = velSels['r'].value
     // var vt = eTurnVel.options[eTurnVel.selectedIndex].text
     switch (btn) {
-        case '0': cmd = "ms,0,0"; break;
-        case 'u': cmd = `ms,${vs},${vs}`; break;
-        case 'd': cmd = `ms,-${vs},-${vs}`; break;
-        case 'l': cmd = `ms,-${vr},${vr}`; break;
-        case 'r': cmd = `ms,${vr},-${vr}`; break;
+        case '0': cmd = "ms=0,0"; break;
+        case 'u': cmd = `ms=${vs},${vs}`; break;
+        case 'd': cmd = `ms=-${vs},-${vs}`; break;
+        case 'l': cmd = `ms=-${vr},${vr}`; break;
+        case 'r': cmd = `ms=${vr},-${vr}`; break;
     }
 
     fetch("/cmd", {
         method: 'POST',
         headers: {
-          'Content-Type': 'text/plain',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: cmd,
     })
     .then((response) => {
         if (!response.ok) {
-            // document.getElementById('resp').innerText = "response";
+            // addLog(response.statusText, "error");
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
     })

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 WebSockets & SSE</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>ESP32 WebSockets & SSE</h1>
+    <button onclick="sendCommand('LED_ON')">Turn On LED</button>
+    <p id="status">Waiting for data...</p>
+
+    <button onclick="sendGET()">Send GET Request</button>
+    <button onclick="sendPOST()">Send POST Request</button>
+
+    <script src="script.js"></script>
+</body>
+</html>

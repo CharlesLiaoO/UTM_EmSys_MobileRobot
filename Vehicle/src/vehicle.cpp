@@ -1,14 +1,20 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include "PID.h"
-#include <WebServer.h>
 #include <LittleFS.h>
-#define FS LittleFS
+#define MyFS LittleFS
 void printPartition();
 
+// #include <WebServer.h>
 // web server
-WebServer server(80);  // http port
-WiFiClient sseClient;  // keep life span
+// WebServer server(80);  // http port
+// WiFiClient sseClient;  // keep life span
+
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+AsyncWebServer server(80);
+AsyncEventSource events("/events");
+// AsyncWebSocket ws("/ws");
 
 // #include <BluetoothSerial.h>
 // BluetoothSerial SerialBT;  // used as remote serial port for printing
@@ -19,8 +25,12 @@ WiFiClient sseClient;  // keep life span
 // #define Use_tcpSer
 // #define Serial tcpSerCl
 
-#include <SseSer.h>
-SseSer sseSer(&sseClient);
+// #include <SseSer.h>
+// SseSer sseSer(&sseClient);
+// #define Serial sseSer
+
+#include <SseSerAsyn.h>
+SseSerAsyn sseSer(&events);
 #define Serial sseSer
 
 // ref: https://github.com/espressif/arduino-esp32/tree/master/libraries/ArduinoOTA/examples
@@ -107,18 +117,6 @@ void IRAM_ATTR DebugPID() {
   // Serial.println("DebugPID");
   pid_motorSpeed[0].printVars = true;
   pid_motorSpeed[1].printVars = true;
-}
-
-void svSendSse(const String& message) {
-  // Serial.println(message);
-  if (sseClient.connected()) {
-    // int t = esp_timer_get_time();
-    sseClient.print("data: ");  //DO NOT forget data: ...
-    sseClient.println(message);
-    sseClient.println();  // end data
-    // int tn = esp_timer_get_time();
-    // Serial.println(tn-t);  // tcp msg: 10ms...
-  }
 }
 
 // Function to set motor direction and speed
@@ -295,58 +293,26 @@ void stopLoop(const char * msg=0) {
   digitalWrite(pin_ready, 0);
 }
 
-void serverOnSse() {
-  Serial.println("serverOnSse");
-  if (server.client()) {
-    sseClient = server.client();
-    sseClient.setNoDelay(true);  // No Nagle algorithm
-    sseClient.println("HTTP/1.1 200 OK");
-    sseClient.println("Content-Type: text/event-stream");
-    sseClient.println("Cache-Control: no-cache");
-    sseClient.println("Connection: keep-alive");
-    sseClient.println();  // end header
-    Serial.println("serverOnSse OK");
+void serverOnPost(AsyncWebServerRequest *request) {
+  if (!request->hasParam("ms", true)) {
+    request->send(400, "text/plain", "ESP32: Bad Request - Missing 'ms' parameter");
+    return;
   }
-}
 
-void serverOnPost() {
-  String cmdArgs = server.arg("plain");
-
-  char cmd[512];
+  String cmdArgs = request->getParam("ms", true)->value();
   float speed1, speed2;
-  int matched = sscanf(cmdArgs.c_str(), "%2s,%f,%f", cmd, &speed1, &speed2);  //%s needs specify the width...
-  if (matched != 3) {
+  int matched = sscanf(cmdArgs.c_str(), "%f,%f", &speed1, &speed2);
+  if (matched != 2) {
     Serial.printf("cmdArgs parse failed, cmdArgs=%s, matched=%d\n", cmdArgs.c_str(), matched);
     stopLoop();
     return;
   } else {
-    Serial.printf("Received: %s,%.3f,%.3f\n", cmd, speed1, speed2);
+    Serial.printf("Received: ms=%.3f,%.3f\n", speed1, speed2);
     setMotorSpeed(1, speed1);
     setMotorSpeed(2, speed2);
   }
 
-  server.send(200, "text/plain", "OK");  // send resp
-}
-
-void serverRegPathHandle(const String &path, String pathFile=String()) {
-  if (pathFile.isEmpty())
-    pathFile = path;
-  server.on(path, HTTP_GET, [pathFile, path]() {
-    File file = FS.open(pathFile, "r");
-    if (!file) {
-      Serial.printf("Failed to open file '%s' for '%s'\n", pathFile.c_str(), path.c_str());
-      stopLoop();
-      return;
-    }
-    auto suffix = pathFile.substring(pathFile.lastIndexOf(".") + 1);
-    if (suffix == "html")
-      server.streamFile(file, "text/html");
-    else if (suffix == "css")
-      server.streamFile(file, "text/css");
-    else if (suffix == "js") {
-      server.streamFile(file, "application/javascript");
-    }
-  });
+  request->send(200, "text/plain", "");  // send resp
 }
 
 void setup() {
@@ -375,23 +341,39 @@ void setup() {
   tcpSerServer.begin();
 #endif
 
-  if (!FS.begin()) {
+  if (!MyFS.begin()) {
     Serial.println("Failed to mount file system");
     stopLoop();
     return;
   }
 
-  server.onNotFound([](){
-    server.send(404, "text/plain", "---- Error Address! ----");
+  server.onNotFound([](AsyncWebServerRequest *request){
+    request->send(404, "text/plain", "---- Error Address! ----");
   });
 
-  serverRegPathHandle("/", "/webpage.html");
-  serverRegPathHandle("/style.css");
-  serverRegPathHandle("/pidPlot.js");
-  serverRegPathHandle("/script.js");
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(MyFS, "/webpage.html", "text/html");
+  });
+  server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(MyFS, "/style.css", "text/css");
+  });
+  server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(MyFS, "/script.js", "application/javascript");
+  });
+  server.on("/pidPlot.js", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(MyFS, "/pidPlot.js", "application/javascript");
+  });
 
+  // server.on("/??", HTTP_GET, [](AsyncWebServerRequest *request) {
+  //   request->send(200, "text/plain", "ESP32: GET Request Received");
+  // });
   server.on("/cmd", HTTP_POST, serverOnPost);
-  server.on("/events", HTTP_GET, serverOnSse);
+
+  // server.on("/events", HTTP_GET, serverOnSse);
+  server.addHandler(&events);
+
+  // ws.onEvent(onWebSocketEvent);
+  // server.addHandler(&ws);
 
   server.begin();
 
@@ -501,6 +483,7 @@ void loop() {
     tcpSerCl = tcpSerServer.available();  // try get new tcpSerCl
   }
 #endif
+  // ws.cleanupClients(); // Keep WebSocket clients alive
 
   ArduinoOTA.handle();
   if (ArduinoOTA_updating) {
@@ -513,7 +496,6 @@ void loop() {
     // while(1);
   }
 
-  server.handleClient();
   appPidMotorSpeed();
   calculateOdometry();
 }
