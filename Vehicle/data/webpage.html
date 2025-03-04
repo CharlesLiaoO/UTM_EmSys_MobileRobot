@@ -136,10 +136,6 @@
             margin: 0;
         }
 
-        .gjs-custom-code {
-            padding: 5px;
-        }
-
         .robot_td {
             border-bottom-style: solid;
             border-bottom-width: 1px;
@@ -152,6 +148,13 @@
             border-bottom-style: solid;
         }
 
+        .form_row_center {
+            display: flex;
+            justify-content: space-between;
+            padding-right: 20px;
+            padding-left: 20px;
+        }
+
         #i2uku {
             text-align: center;
             display: none;
@@ -159,7 +162,6 @@
 
         .gjs-grid-column {
             flex: 1 1 0%;
-            padding: 5px 0;
         }
 
         .gjs-grid-row {
@@ -174,31 +176,27 @@
         #i1ai7b {
             flex: 0 1 auto;
             padding-left: 20px;
+            padding-right: 5px;
         }
 
         #ihn5g3 {
-            padding-right: 10px;
-            margin-top: 5px;
-            margin-right: 5px;
-            margin-bottom: -5px;
-            margin-left: 5px;
-            padding-left: 10px;
-            flex: 0 0 auto;
+            justify-content: center;
+            display: flex;
         }
 
         #irl3bu {
             padding-left: 10px;
             padding-right: 10px;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: center;
             flex-wrap: wrap;
-            align-content: space-around;
         }
 
         #in6qqk {
-            max-width: 800px;
-            min-width: 500px;
-            min-height: 300px;
+            align-self: stretch;
+            flex: 1 1 0%;
+            display: flex;
+            justify-content: center;
         }
 
         #i6mgi1 {
@@ -239,8 +237,52 @@
 
         #i2kktr {
             flex: 0 1 auto;
-            padding-right: 5px;
-            padding-left: 5px;
+        }
+
+        .select_no_border {
+            border-top-style: none;
+            border-right-style: none;
+            border-bottom-style: none;
+            border-left-style: none;
+        }
+
+        #logContainer {
+            overflow-y: auto;
+            margin-top: 5px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            margin-left: 5px;
+            min-height: 200px;
+            max-height: 300px;
+            min-width: 600px;
+            max-width: 800px;
+            justify-content: center;
+            align-items: center;
+            flex: 1 1 0%;
+            border-top-style: groove;
+            border-right-style: groove;
+            border-bottom-style: groove;
+            border-left-style: groove;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+            border-bottom-left-radius: 4px;
+            border-top-width: 2px;
+            border-right-width: 2px;
+            border-bottom-width: 2px;
+            border-left-width: 2px;
+            border-top-color: rgba(0, 0, 0, 0.5);
+            border-right-color: rgba(0, 0, 0, 0.5);
+            border-bottom-color: rgba(0, 0, 0, 0.5);
+            border-left-color: rgba(0, 0, 0, 0.5);
+        }
+
+        #motorChart {
+            min-height: 400px;
+            max-height: 400px;
+            min-width: 600px;
+            max-width: 1000px;
+            flex: 1 1 0%;
         }
 
         @media (max-width: 992px) {
@@ -251,6 +293,10 @@
             #irl3bu {
                 flex-direction: row;
             }
+
+            #i2kktr {
+                display: flex;
+            }
         }
 
         @media (max-width: 920px) {
@@ -259,8 +305,22 @@
             }
         }
 
-        @media (max-width: 480px) {
-            #in6qqk {
+        @media (max-width: 768px) {
+            #i1ai7b {
+                padding-left: 0px;
+                padding-right: 0px;
+            }
+
+            .form_row_center {
+                padding-right: 0px;
+            }
+
+            #motorChart {
+                min-height: 200px;
+                min-width: 300px;
+            }
+
+            #logContainer {
                 min-width: 300px;
             }
         }
@@ -271,10 +331,8 @@
     <h2 id="i2uku" class="text-center"><strong id="iravg">lch-VehicleControl</strong></h2>
     <div id="irl3bu" class="gjs-grid-row">
         <div id="in6qqk" class="gjs-grid-column">
-            <div id="ijbiu1" class="gjs-custom-code">
-                <div id="motorChart">
-                    <script src="pidPlot.js"></script>
-                </div>
+            <div id="motorChart">
+                <script src="pidPlot.js"></script>
             </div>
         </div>
         <div id="i1ai7b" class="gjs-grid-column">
@@ -368,10 +426,22 @@
                     <button type="button" id="ii7awv" onpointerdown="btnDeal('u')" onpointerup="btnDeal('0')">↑</button><button type="button" id="i42e0x" onpointerdown="btnDeal('d')" onpointerup="btnDeal('0')">↓</button><button type="button" id="itbyp7" onpointerdown="btnDeal('l')" onpointerup="btnDeal('0')">←</button><button type="button" id="im24ej" onpointerdown="btnDeal('r')" onpointerup="btnDeal('0')">→</button><button type="button" id="i8to6k">OP</button>
                 </div>
             </div>
+            <form method="get" id="ivas8a" action=""><label id="ift2iy">Speed:</label>
+                <div id="ijxi1n" class="form_row_center">
+                    <label id="ihizyg">Straight:</label><select type="text" id="il42zh-2" name="Straight" options="[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object]" class="select_no_border"><option value="opt4">150</option></select>
+                </div>
+                <div id="ivw14w" class="form_row_center">
+                    <label id="i1s9uf">Turn:</label><select type="text" id="il42zh-2-2" name="Turn" options="[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object]" class="select_no_border"></select>
+                </div>
+                <div id="ixq7fg" class="form_row_center">
+                    <label id="iy69mw">Rotate:</label><select type="text" id="il42zh-2-2-2" name="Rotate" options="[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object]" class="select_no_border"><option value="opt7">75</option></select>
+                </div>
+            </form>
         </div>
         <div id="ihn5g3" class="gjs-grid-column">
-            <p id="debugMsg">--debug message--
-            </p>
+            <div id="logContainer" title="">
+                <div id="iyre5c">Messages:</div>
+            </div>
         </div>
     </div>
 </body>

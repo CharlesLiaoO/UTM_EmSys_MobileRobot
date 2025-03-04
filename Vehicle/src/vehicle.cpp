@@ -6,14 +6,22 @@
 #define FS LittleFS
 void printPartition();
 
+// web server
+WebServer server(80);  // http port
+WiFiClient sseClient;  // keep life span
+
 // #include <BluetoothSerial.h>
 // BluetoothSerial SerialBT;  // used as remote serial port for printing
 // #define Serial SerialBT
 
-WiFiServer tcpSerServer(12321);
-WiFiClient tcpSerCl;
-#define Use_tcpSer
-#define Serial tcpSerCl
+// WiFiServer tcpSerServer(12321);
+// WiFiClient tcpSerCl;
+// #define Use_tcpSer
+// #define Serial tcpSerCl
+
+#include <SseSer.h>
+SseSer sseSer(&sseClient);
+#define Serial sseSer
 
 // ref: https://github.com/espressif/arduino-esp32/tree/master/libraries/ArduinoOTA/examples
 #include <ArduinoOTA.h>
@@ -21,10 +29,6 @@ bool ArduinoOTA_updating = false;
 
 void setup();
 void ArduinoOTASetup();
-
-// web server
-WebServer server(80);  // http port
-WiFiClient sseClient;  // keep life span
 
 const int pin_ready = 2;
 
@@ -274,7 +278,7 @@ void calculateOdometry() {
   pt_b = pt;
 
   // Serial.printf("enc1=%d, enc2=%d, enc1/enc2=%f\n", encoder1_Count, encoder2_Count, float(encoder1_Count)/encoder2_Count);  // Not for wheel align
-  // Serial.printf("%.3fs -- Vel: lin=%.3f, ang=%.3f; Pos: x, y, h = %.3f, %.3f, %.3f\r\n", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
+  Serial.printf("%.3fs -- Vel: lin=%.3f, ang=%.3f; Pos: x, y, h = %.3f, %.3f, %.3f\r\n", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
 
   // data json to webpage
   char json[1024];
@@ -491,10 +495,12 @@ void DealClientData(WiFiClient *socket) {
 }
 
 void loop() {
+#ifdef Use_tcpSer
   if (tcpSerCl) {  // == tcpSerCl.connected()
   } else {
     tcpSerCl = tcpSerServer.available();  // try get new tcpSerCl
   }
+#endif
 
   ArduinoOTA.handle();
   if (ArduinoOTA_updating) {
