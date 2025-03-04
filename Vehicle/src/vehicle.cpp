@@ -204,8 +204,7 @@ void appPidMotorSpeed() {
     mayPrint = true;
   }
   if (mayPrint && (pid_bf[0].isNotSame_Assign_Main(pid_motorSpeed[0]) || pid_bf[1].isNotSame_Assign_Main(pid_motorSpeed[1]))) {
-    String msg = getPidPlotStr();
-    svSendSse(msg);
+    Serial.println(getPidPlotStr());
   }
 
   for (int mi=0; mi<2; mi++) {
@@ -284,8 +283,7 @@ void calculateOdometry() {
   char json[1024];
   sprintf(json, R"({"cyc_time":%.3f, "v_linear":%.3f, "v_angle":%.3f, "x":%.3f, "y":%.3f, "h":%.3f})", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
 
-  // Serial.println(json);
-  svSendSse(json);
+  Serial.println(json);
 }
 
 bool bStopLoop = false;

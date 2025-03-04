@@ -40,7 +40,7 @@ eventSource.onmessage = function(event) {
         dataStr = dataStr.slice(1)
         plotly_updateData(JSON.parse(dataStr))
     } else if (dataStr.startsWith("{")) {
-        var data = JSON.parse(event.data)
+        var data = JSON.parse(dataStr)
         for (var dName in data) {
             var elm = document.getElementById(dName)
             if (elm) elm.innerText = data[dName].toFixed(3);
