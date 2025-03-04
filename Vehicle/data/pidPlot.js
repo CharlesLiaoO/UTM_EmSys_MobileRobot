@@ -50,7 +50,7 @@ let layout = {
         pad: 5,  //padding (in px) between the plotting area and the axis lines
         l: 50,
         r: 50,
-        // t: 0,
+        t: 30,
         b: 30  // default is too big (100 px)
     },
 };
