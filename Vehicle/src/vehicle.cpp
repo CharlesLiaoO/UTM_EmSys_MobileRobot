@@ -363,6 +363,9 @@ void setup() {
   server.on("/pidPlot.js", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(MyFS, "/pidPlot.js", "application/javascript");
   });
+  server.on("/joy.min.js", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(MyFS, "/joy.min.js", "application/javascript");
+  });
 
   // server.on("/??", HTTP_GET, [](AsyncWebServerRequest *request) {
   //   request->send(200, "text/plain", "ESP32: GET Request Received");

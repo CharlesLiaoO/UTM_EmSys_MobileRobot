@@ -1,9 +1,14 @@
 // @ts-check - enable TypeScript check
 /// <reference path="pidPlot.js" />
+/// <reference path="joy.min.js" />
 
 // document.addEventListener("DOMContentLoaded", function () {  // only html loaded
 window.onload = function () {  // all html/css/image... loaded
     logContainer = document.getElementById("logContainer");
+
+    new JoyStick('joystick', {}, function(d) {
+        btnDeal(d.cardinalDirection);
+    });
 
     velSels['s'] = document.getElementsByName("Straight")[0];
     velSels['t'] = document.getElementsByName("Turn")[0];
@@ -59,11 +64,15 @@ function btnDeal(btn)
     var vr = velSels['r'].value
     // var vt = eTurnVel.options[eTurnVel.selectedIndex].text
     switch (btn) {
-        case '0': cmd = "ms=0,0"; break;
-        case 'u': cmd = `ms=${vs},${vs}`; break;
-        case 'd': cmd = `ms=-${vs},-${vs}`; break;
-        case 'l': cmd = `ms=-${vr},${vr}`; break;
-        case 'r': cmd = `ms=${vr},-${vr}`; break;
+        case 'C': cmd = "ms=0,0"; break;
+        case 'N': cmd = `ms=${vs},${vs}`; break;
+        case 'S': cmd = `ms=-${vs},-${vs}`; break;
+        case 'W': cmd = `ms=-${vr},${vr}`; break;
+        case 'E': cmd = `ms=${vr},-${vr}`; break;
+        case 'NW': cmd = `ms=${vt},${vs}`; break;
+        case 'NE': cmd = `ms=${vs},${vt}`; break;
+        case 'SW': cmd = `ms=-${vt},-${vs}`; break;
+        case 'SE': cmd = `ms=-${vs},-${vt}`; break;
     }
 
     fetch("/cmd", {

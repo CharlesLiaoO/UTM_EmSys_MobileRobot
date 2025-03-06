@@ -10,6 +10,7 @@
     <script src="script.js"></script>
     <!-- from plotly v3, must specify version -->
     <script src="https://cdn.plot.ly/plotly-basic-3.0.1.min.js" charset="utf-8"></script>
+    <script src="joy.min.js" charset="utf-8"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -155,6 +156,13 @@
             padding-left: 20px;
         }
 
+        .select_no_border {
+            border-top-style: none;
+            border-right-style: none;
+            border-bottom-style: none;
+            border-left-style: none;
+        }
+
         #i2uku {
             text-align: center;
             display: none;
@@ -199,34 +207,6 @@
             justify-content: center;
         }
 
-        #i6mgi1 {
-            grid-template-columns: 50px 50px 50px;
-            grid-template-rows: 50px 50px 50px;
-            gap: 10px;
-            display: grid;
-            place-content: center;
-        }
-
-        #ii7awv {
-            grid-area: 1 / 2 / 2 / 3;
-        }
-
-        #i42e0x {
-            grid-area: 3 / 2 / 4 / 3;
-        }
-
-        #itbyp7 {
-            grid-area: 2 / 1 / 3 / 2;
-        }
-
-        #im24ej {
-            grid-area: 2 / 3 / 3 / 4;
-        }
-
-        #i8to6k {
-            grid-area: 2 / 2 / 3 / 3;
-        }
-
         #iekai {
             text-align: left;
         }
@@ -237,13 +217,6 @@
 
         #i2kktr {
             flex: 0 1 auto;
-        }
-
-        .select_no_border {
-            border-top-style: none;
-            border-right-style: none;
-            border-bottom-style: none;
-            border-left-style: none;
         }
 
         #logContainer {
@@ -285,6 +258,11 @@
             flex: 1 1 0%;
         }
 
+        #joystick {
+            width: 200px;
+            height: 200px;
+        }
+
         @media (max-width: 992px) {
             .gjs-grid-row {
                 flex-direction: column;
@@ -296,6 +274,7 @@
 
             #i2kktr {
                 display: flex;
+                align-items: center;
             }
         }
 
@@ -306,12 +285,12 @@
         }
 
         @media (max-width: 768px) {
-            #i1ai7b {
-                padding-left: 0px;
+            .form_row_center {
                 padding-right: 0px;
             }
 
-            .form_row_center {
+            #i1ai7b {
+                padding-left: 0px;
                 padding-right: 0px;
             }
 
@@ -422,16 +401,14 @@
         </div>
         <div id="i2kktr" class="gjs-grid-column">
             <div id="iz3pt3" class="gjs-custom-code">
-                <div id="i6mgi1">
-                    <button type="button" id="ii7awv" onpointerdown="btnDeal('u')" onpointerup="btnDeal('0')">↑</button><button type="button" id="i42e0x" onpointerdown="btnDeal('d')" onpointerup="btnDeal('0')">↓</button><button type="button" id="itbyp7" onpointerdown="btnDeal('l')" onpointerup="btnDeal('0')">←</button><button type="button" id="im24ej" onpointerdown="btnDeal('r')" onpointerup="btnDeal('0')">→</button><button type="button" id="i8to6k">OP</button>
-                </div>
+                <div id="joystick"></div>
             </div>
             <form method="get" id="ivas8a" action=""><label id="ift2iy">Speed:</label>
                 <div id="ijxi1n" class="form_row_center">
                     <label id="ihizyg">Straight:</label><select type="text" id="il42zh-2" name="Straight" options="[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object]" class="select_no_border"><option value="opt4">150</option></select>
                 </div>
                 <div id="ivw14w" class="form_row_center">
-                    <label id="i1s9uf">Turn:</label><select type="text" id="il42zh-2-2" name="Turn" options="[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object]" class="select_no_border"></select>
+                    <label id="i1s9uf">Turn:</label><select type="text" id="il42zh-2-2" name="Turn" options="[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object]" class="select_no_border"><option value="opt1">100</option></select>
                 </div>
                 <div id="ixq7fg" class="form_row_center">
                     <label id="iy69mw">Rotate:</label><select type="text" id="il42zh-2-2-2" name="Rotate" options="[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object]" class="select_no_border"><option value="opt7">75</option></select>
