@@ -5,9 +5,9 @@ class PID
 public:
     // 1. pars need to be set
     // 1.1 manually
-    float Kp = 0;
-    float Ki = 0;
-    float Kd = 0;
+    float kp = 0;
+    float ki = 0;
+    float kd = 0;
     float output_min = FLT_MIN;
     float output_max = FLT_MAX;
     float integral_limit = FLT_MAX;
@@ -28,9 +28,9 @@ public:
     float integral = 0;
 
     void setPID(float p, float i, float d) {
-        Kp = p;
-        Ki = i;
-        Kd = d;
+        kp = p;
+        ki = i;
+        kd = d;
     }
     void setLimit(float output_min=FLT_MIN, float output_max=FLT_MAX, float integral_limit=FLT_MAX) {
         this->output_min = output_min;
@@ -49,10 +49,10 @@ public:
         if (integral > integral_limit) integral = integral_limit;
         else if (integral < -integral_limit) integral = -integral_limit;
 
-        output = Kp * error + Ki * integral + Kd * (error - error_last);
+        output = kp * error + ki * integral + kd * (error - error_last);
         if (printVars) {
             printVars = false;
-            Serial.printf("Kp=%.3f, error=%.3f, Ki=%.3f, integral=%.3f, Kd=%.3f, error_last=%.3f, output=%.3f\n", Kp, error, Ki, integral, Kd, error_last, output);
+            Serial.printf("kp=%.3f, error=%.3f, ki=%.3f, integral=%.3f, kd=%.3f, error_last=%.3f, output=%.3f\n", kp, error, ki, integral, kd, error_last, output);
         }
         if (output > output_max) output = output_max;
         else if (output < output_min) output = output_min;
@@ -64,17 +64,18 @@ public:
     float CalOutput_Inc() {
         error = setpoint - feedback;
 
-        float output_dt = Kp * (error - error_last) + Ki * error + Kd * (error - 2*error_last + error_last_last);
+        float output_dt = kp * (error - error_last) + ki * error + kd * (error - 2*error_last + error_last_last);
         output += output_dt;
+        // Serial.printf("E=%.3f, EL=%.3f, ELL=%.3f, OD=%.3f, O=%.3f\n", error, error_last, error_last_last, output_dt, output);
         if (output > output_max) output = output_max;
         else if (output < output_min) output = output_min;
 
         error_last_last = error_last;
         error_last = error;
 
-        if (setpoint == 0) {
-            output = 0;  // clear
-        }
+        // if (setpoint == 0) {
+        //     output = 0;  // clear
+        // }
         return output;
     }
 
@@ -167,7 +168,7 @@ public:
     }
     String getDataString_IE(const char *prefix) {
         char tmp[512];
-        sprintf(tmp, "\1_integral:%.3f,\1_error_last:%.3f,\1_error_last_last:%.3f", integral, error_last, error_last_last);
+        sprintf(tmp, "\1_I:%.3f, \1_EL:%.3f, \1_ELL:%.3f", integral, error_last, error_last_last);
         String ret(tmp);
         ret.replace("\1", prefix);
         return ret;
