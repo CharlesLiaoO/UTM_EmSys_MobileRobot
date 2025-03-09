@@ -1,0 +1,28 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "PlatformIO",
+			"task": "Build",
+			"problemMatcher": [
+				"$platformio"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"label": "PlatformIO: Build"
+		},
+		{
+			"label": "PIO: Upload OTA",
+			"type": "shell",
+			"command": "C:/Users/82056/.platformio/penv/Scripts/pio.exe run && C:/Users/82056/.platformio/penv/Scripts/pio.exe run -t upload --upload-port 192.168.1.3",
+			"problemMatcher": [
+				"$platformio"
+			],
+			"group": {
+				"kind": "build"
+			}
+		},
+	]
+}
