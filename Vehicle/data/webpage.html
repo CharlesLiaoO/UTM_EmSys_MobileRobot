@@ -202,9 +202,9 @@
 
         #in6qqk {
             align-self: stretch;
-            flex: 1 1 0%;
             display: flex;
             justify-content: center;
+            flex: 1 0 0%;
         }
 
         #iekai {
@@ -232,10 +232,6 @@
             justify-content: center;
             align-items: center;
             flex: 1 1 0%;
-            border-top-style: groove;
-            border-right-style: groove;
-            border-bottom-style: groove;
-            border-left-style: groove;
             border-top-left-radius: 4px;
             border-top-right-radius: 4px;
             border-bottom-right-radius: 4px;
@@ -248,19 +244,33 @@
             border-right-color: rgba(0, 0, 0, 0.5);
             border-bottom-color: rgba(0, 0, 0, 0.5);
             border-left-color: rgba(0, 0, 0, 0.5);
+            border-top-style: groove;
+            border-right-style: groove;
+            border-bottom-style: groove;
+            border-left-style: groove;
         }
 
         #motorChart {
             min-height: 400px;
             max-height: 400px;
-            min-width: 600px;
+            min-width: 800px;
             max-width: 1000px;
-            flex: 1 1 0%;
+            flex: 1 0 0%;
         }
 
         #joystick {
             width: 200px;
             height: 200px;
+        }
+
+        .num_input_width {
+            width: 3em;
+        }
+
+        #iv4bs2 {
+            margin-left: 10px;
+            margin-bottom: 4px;
+            height: 1.5em;
         }
 
         @media (max-width: 992px) {
@@ -275,6 +285,10 @@
             #i2kktr {
                 display: flex;
                 align-items: center;
+            }
+
+            #motorChart {
+                min-width: 700px;
             }
         }
 
@@ -295,12 +309,19 @@
             }
 
             #motorChart {
-                min-height: 200px;
-                min-width: 300px;
+                min-width: 500px;
+                min-height: 300px;
             }
 
             #logContainer {
                 min-width: 300px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #motorChart {
+                min-width: 300px;
+                min-height: 200px;
             }
         }
     </style>
@@ -403,9 +424,16 @@
             <div id="iz3pt3" class="gjs-custom-code">
                 <div id="joystick"></div>
             </div>
-            <form method="get" id="ivas8a" action=""><label id="ift2iy">Speed:</label>
+            <form method="get" id="ivas8a" action="">
+                <label id="ift2iy">PID:</label><button type="button" id="iv4bs2" name="pidApplyBtn">Apply</button>
                 <div id="ijxi1n" class="form_row_center">
-                    <label id="ihizyg">Straight:</label><select type="text" id="il42zh-2" name="Straight" options="[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object]" class="select_no_border"><option value="opt4">150</option></select>
+                    <label id="ihizyg">1: </label><input type="text" id="igdcxt" placeholder="P" name="pid1_p" class="num_input_width"/><input type="text" id="i7u23v" name="pid1_i" placeholder="I" class="num_input_width"/><input type="text" id="i3q335" name="pid1_d" placeholder="D" class="num_input_width"/>
+                </div>
+                <div id="ijxi1n-3" class="form_row_center">
+                    <label id="ihizyg-3">2: </label><input type="text" id="igdcxt-2" placeholder="P" name="pid2_p" class="num_input_width"/><input type="text" id="i7u23v-2" name="pid2_i" placeholder="I" class="num_input_width"/><input type="text" id="i3q335-2" name="pid2_d" placeholder="D" class="num_input_width"/>
+                </div><label id="ift2iy-2">Speed:</label>
+                <div id="ijxi1n-2" class="form_row_center">
+                    <label id="ihizyg-2">Straight:</label><select type="text" id="il42zh-2-3" name="Straight" options="[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object]" class="select_no_border"><option value="opt4">150</option></select>
                 </div>
                 <div id="ivw14w" class="form_row_center">
                     <label id="i1s9uf">Turn:</label><select type="text" id="il42zh-2-2" name="Turn" options="[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object]" class="select_no_border"><option value="opt1">100</option></select>

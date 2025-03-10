@@ -5,6 +5,9 @@
 #define MyFS LittleFS
 void printPartition();
 
+#include "json.hpp"
+using json = nlohmann::ordered_json;
+
 // #include <WebServer.h>
 // web server
 // WebServer server(80);  // http port
@@ -75,6 +78,10 @@ float motorSpeedMax;
 const int cycTime = 10;
 const int printCycTime = 100;
 PID pid_motorSpeed[2];
+json jCfgRoot;
+// json *jCfgPid[2];
+// std::reference_wrapper <json> jCfgPid[2];  array requires a default constructor
+std::vector<std::reference_wrapper<json>> jCfgPid;
 
 double linearVelocity = 0;
 double angularVelocity = 0;
@@ -184,13 +191,13 @@ void appPidMotorSpeed() {
   if (!usePid)
     return;
 
-  static int pwm_bf[2] = {
+  static float pwm_bf[2] = {
     0, 0
   };
-  int pwm[2];
+  float pwm[2];
   for (int mi=0; mi<2; mi++) {
     // pwm[mi] = pid_motorSpeed[mi].CalOutput_Inc();
-    pwm[mi] = pid_motorSpeed[mi].CalOutput_Pos();
+    pwm[mi] = pid_motorSpeed[mi].CalOutput_Inc();
   }
 
   static PID pid_bf[2];  // just for debug
@@ -204,6 +211,9 @@ void appPidMotorSpeed() {
   if (mayPrint && (pid_bf[0].isNotSame_Assign_Main(pid_motorSpeed[0]) || pid_bf[1].isNotSame_Assign_Main(pid_motorSpeed[1]))) {
     Serial.println(getPidPlotStr());
   }
+  // if (mayPrint && (pid_bf[0].isNotSame_Assign_IE(pid_motorSpeed[0]) || pid_bf[1].isNotSame_Assign_IE(pid_motorSpeed[1]))) {
+  //   Serial.println(pid_bf[0].getDataString_IE(1) + "--" + pid_bf[1].getDataString_IE(2) );
+  // }
 
   for (int mi=0; mi<2; mi++) {
     if (pwm_bf[mi] == pwm[mi])
@@ -293,23 +303,113 @@ void stopLoop(const char * msg=0) {
   digitalWrite(pin_ready, 0);
 }
 
-void serverOnPost(AsyncWebServerRequest *request) {
-  if (!request->hasParam("ms", true)) {
-    request->send(400, "text/plain", "ESP32: Bad Request - Missing 'ms' parameter");
+void listFiles() {
+  File root = LittleFS.open("/");
+  if (!root) {
+      Serial.println("Failed to open root directory");
+      return;
+  }
+  if (!root.isDirectory()) {
+      Serial.println("Root is not a directory");
+      return;
+  }
+
+  Serial.println("Listing all files:");
+  File file = root.openNextFile();
+  while (file) {
+      Serial.printf("File: %s, Size: %d bytes\n", file.name(), file.size());
+      file = root.openNextFile();
+  }
+}
+
+String LoadPidConfig() {
+  // Serial.printf("Free heap memory: %d bytes\n", esp_get_free_heap_size());
+  // listFiles();
+
+  auto fileDef = MyFS.open("/configDef.json", "r");
+  if (fileDef) {
+    String sFile;
+    while (fileDef.available()) { sFile += char(fileDef.read()); }
+    jCfgRoot = json::parse(sFile.c_str(), nullptr, false, true);
+    // Serial.printf("jCfgRoot of def: %s\n", jCfgRoot.dump().c_str());
+  } else {
+    Serial.printf("Failed to open file %s for reading\n", fileDef.path());
+    return "";
+  }
+
+  auto file = MyFS.open("/config.json", "r");
+  if (file) {
+    String sFile;
+    while (file.available()) { sFile += char(file.read()); }
+    jCfgRoot = json::parse(sFile.c_str(), nullptr, false, true);
+  }
+  Serial.printf("jCfgRoot: %s\n", jCfgRoot.dump().c_str());
+
+  jCfgPid.clear();
+  for (int i=0; i<2; i++) {
+    auto &jPid = jCfgRoot["pid"]["velLoop_pos"][i];
+    jCfgPid.push_back(std::ref(jPid));
+    pid_motorSpeed[i].setPID(jPid["p"], jPid["i"], jPid["d"]);
+  }
+
+  char tmp[256];
+  sprintf(tmp, R"(N{"pid1_p":%f, "pid1_i":%f, "pid1_d":%f, "pid2_p":%f, "pid2_i":%f, "pid2_d":%f})",
+    pid_motorSpeed[0].kp, pid_motorSpeed[0].ki, pid_motorSpeed[0].kd,
+    pid_motorSpeed[1].kp, pid_motorSpeed[1].ki, pid_motorSpeed[1].kd);
+  return tmp;
+}
+
+void UpdataPidConfig(float v[6]) {
+  if (v[0] == 9999) {
+    MyFS.remove("/config.json");
     return;
   }
 
-  String cmdArgs = request->getParam("ms", true)->value();
-  float speed1, speed2;
-  int matched = sscanf(cmdArgs.c_str(), "%f,%f", &speed1, &speed2);
-  if (matched != 2) {
-    Serial.printf("cmdArgs parse failed, cmdArgs=%s, matched=%d\n", cmdArgs.c_str(), matched);
-    stopLoop();
-    return;
+  for (int i=0; i<2; i++) {
+    jCfgPid[i].get()["p"] = v[i*3];
+    jCfgPid[i].get()["i"] = v[i*3+1];
+    jCfgPid[i].get()["d"] = v[i*3+2];
+    pid_motorSpeed[i].setPID(v[i*3], v[i*3+1], v[i*3+2]);
+  }
+  // Serial.printf("jCfgRoot: %s\n", jCfgRoot.dump().c_str());
+
+  auto file = MyFS.open("/config.json", "w");
+  if (file) {
+    file.print(jCfgRoot.dump().c_str());
   } else {
-    Serial.printf("Received: ms=%.3f,%.3f\n", speed1, speed2);
-    setMotorSpeed(1, speed1);
-    setMotorSpeed(2, speed2);
+    Serial.printf("Failed to open file %s for writing\n", file.path());
+  }
+}
+
+void serverOnPost(AsyncWebServerRequest *request) {
+  if (request->hasParam("ms", true)) {
+    String args = request->getParam("ms", true)->value();
+    float speed1, speed2;
+    int matched = sscanf(args.c_str(), "%f,%f", &speed1, &speed2);
+    if (matched != 2) {
+      Serial.printf("ms: args parse failed, args=%s, matched=%d\n", args.c_str(), matched);
+      stopLoop();
+      return;
+    } else {
+      Serial.printf("Received: ms=%.3f,%.3f\n", speed1, speed2);
+      setMotorSpeed(1, speed1);
+      setMotorSpeed(2, speed2);
+    }
+  } else if (request->hasParam("pid", true)) {
+    String args = request->getParam("pid", true)->value();
+    float v[6];
+    int matched = sscanf(args.c_str(), "%f,%f,%f;%f,%f,%f", &v[0], &v[1], &v[2], &v[3], &v[4], &v[5]);
+    if (matched != 6) {
+      Serial.printf("pid: args parse failed, args=%s, matched=%d\n", args.c_str(), matched);
+      stopLoop();
+      return;
+    } else {
+      Serial.printf("Received: pid=%s\n", args.c_str());
+      UpdataPidConfig(v);
+    }
+  } else {
+    request->send(400, "text/plain", "ESP32: Bad Request - Missing 'ms' parameter");
+    return;
   }
 
   request->send(200, "text/plain", "");  // send resp
@@ -374,6 +474,10 @@ void setup() {
 
   // server.on("/events", HTTP_GET, serverOnSse);
   server.addHandler(&events);
+  events.onConnect([/* uiStr */](AsyncEventSourceClient *client){
+    auto uiStr = LoadPidConfig();
+    client->send(uiStr.c_str());
+  });
 
   // ws.onEvent(onWebSocketEvent);
   // server.addHandler(&ws);
@@ -404,10 +508,6 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(pi_DebugPID), DebugPID, RISING);
 
   motorSpeedMax = 0.5;  //$ m/s, used for setpoint speed.
-  pid_motorSpeed[0].setPID(750, 75, 20);
-  pid_motorSpeed[1].setPID(750, 75, 20);
-  pid_motorSpeed[0].setLimit(0, 255);
-  pid_motorSpeed[1].setLimit(0, 255);
 
   ArduinoOTASetup();
   ArduinoOTA.begin();
