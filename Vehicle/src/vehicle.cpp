@@ -4,6 +4,8 @@
 #include <LittleFS.h>
 #define MyFS LittleFS
 void printPartition();
+#include <Preferences.h>
+Preferences nvs;
 
 #include "json.hpp"
 using json = nlohmann::ordered_json;
@@ -21,20 +23,20 @@ AsyncEventSource events("/events");
 
 // #include <BluetoothSerial.h>
 // BluetoothSerial SerialBT;  // used as remote serial port for printing
-// #define Serial SerialBT
+// #define xSerial SerialBT
 
 // WiFiServer tcpSerServer(12321);
 // WiFiClient tcpSerCl;
 // #define Use_tcpSer
-// #define Serial tcpSerCl
+// #define xSerial tcpSerCl
 
 // #include <SseSer.h>
 // SseSer sseSer(&sseClient);
-// #define Serial sseSer
+// #define xSerial sseSer
 
 #include <SseSerAsyn.h>
 SseSerAsyn sseSer(&events);
-#define Serial sseSer
+#define xSerial sseSer
 
 // ref: https://github.com/espressif/arduino-esp32/tree/master/libraries/ArduinoOTA/examples
 #include <ArduinoOTA.h>
@@ -76,6 +78,7 @@ bool usePid = true;  //$
 const int pi_DebugPID = 23;
 float motorSpeedMax;
 const int cycTime = 10;
+float deltaTime = 0;
 const int printCycTime = 100;
 PID pid_motorSpeed[2];
 json jCfgRoot;
@@ -85,12 +88,14 @@ std::vector<std::reference_wrapper<json>> jCfgPid;
 
 double linearVelocity = 0;
 double angularVelocity = 0;
+float angularVelocity_deg = 0;
 double linearVelocity_b = 0;
 double angularVelocity_b = 0;
 
 double posX = 0;  // robot's position X in meter
 double posY = 0;
 double heading = 90.0 * PI/180;  // robot's Heading angle in radian
+float heading_deg = 0;
 
 // Interrupt service routines for encoder counting
 float simBySpd_EncDt1 = 0;
@@ -209,7 +214,7 @@ void appPidMotorSpeed() {
     mayPrint = true;
   }
   if (mayPrint && (pid_bf[0].isNotSame_Assign_Main(pid_motorSpeed[0]) || pid_bf[1].isNotSame_Assign_Main(pid_motorSpeed[1]))) {
-    Serial.println(getPidPlotStr());
+    xSerial.println(getPidPlotStr());
   }
   // if (mayPrint && (pid_bf[0].isNotSame_Assign_IE(pid_motorSpeed[0]) || pid_bf[1].isNotSame_Assign_IE(pid_motorSpeed[1]))) {
   //   Serial.println(pid_bf[0].getDataString_IE(1) + "--" + pid_bf[1].getDataString_IE(2) );
@@ -227,6 +232,12 @@ void appPidMotorSpeed() {
   }
 }
 
+String getBasicData() {
+  char json[256];
+  sprintf(json, R"({"cyc_time":%.3f, "v_linear":%.3f, "v_angle":%.3f, "x":%.3f, "y":%.3f, "h":%.3f})", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
+  return json;
+}
+
 // Function to calculate velocity and position
 void calculateOdometry() {
   // encoder1_Count += simBySpd_EncDt1;  // for sim
@@ -236,7 +247,7 @@ void calculateOdometry() {
   // Calculate time elapsed
   static ulong prevTime = 0;
   unsigned long currentTime = millis();
-  float deltaTime = (currentTime - prevTime) / 1000.0; // seconds
+  deltaTime = (currentTime - prevTime) / 1000.0; // seconds
   prevTime = currentTime;
 
   int dt1 = encoder1_Count - encoder1_Count_b;
@@ -268,14 +279,14 @@ void calculateOdometry() {
   // Update robot's position
   double linearVelocity_x = linearVelocity * cos(heading);  // cos/sin() is in radian!
   double linearVelocity_y = linearVelocity * sin(heading);
-  // Serial.printf("vx=%.3f, vy=%.3f -- ", , linearVelocity_x, linearVelocity_y);
+  // xSerial.printf("vx=%.3f, vy=%.3f -- ", , linearVelocity_x, linearVelocity_y);
   posX += linearVelocity_x * deltaTime;
   posY += linearVelocity_y * deltaTime;
 
   heading += angularVelocity * deltaTime;
 
-  double angularVelocity_deg = angularVelocity * 180/PI;
-  double heading_deg = heading * 180/PI;
+  angularVelocity_deg = angularVelocity * 180/PI;
+  heading_deg = heading * 180/PI;
 
   // Print speed, position
   static int pt_b = 0;
@@ -285,21 +296,16 @@ void calculateOdometry() {
   pt_b = pt;
 
   // Serial.printf("enc1=%d, enc2=%d, enc1/enc2=%f\n", encoder1_Count, encoder2_Count, float(encoder1_Count)/encoder2_Count);  // Not for wheel align
-  Serial.printf("%.3fs -- Vel: lin=%.3f, ang=%.3f; Pos: x, y, h = %.3f, %.3f, %.3f\r\n", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
-
-  // data json to webpage
-  char json[1024];
-  sprintf(json, R"({"cyc_time":%.3f, "v_linear":%.3f, "v_angle":%.3f, "x":%.3f, "y":%.3f, "h":%.3f})", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
-
-  Serial.println(json);
+  // Serial.printf("%.3fs -- Vel: lin=%.3f, ang=%.3f; Pos: x, y, h = %.3f, %.3f, %.3f\r\n", deltaTime, linearVelocity, angularVelocity_deg, posX, posY, heading_deg);
+  xSerial.println(getBasicData());
 }
 
 bool bStopLoop = false;
 void stopLoop(const char * msg=0) {
   bStopLoop = true;
   if (msg)
-    Serial.println(msg);
-  Serial.println("Stop Loop");
+    xSerial.println(msg);
+  xSerial.println("Stop Loop");
   digitalWrite(pin_ready, 0);
 }
 
@@ -323,7 +329,7 @@ void listFiles() {
 }
 
 String LoadPidConfig() {
-  // Serial.printf("Free heap memory: %d bytes\n", esp_get_free_heap_size());
+  xSerial.printf("Free heap memory: %d bytes\n", esp_get_free_heap_size());
   // listFiles();
 
   auto fileDef = MyFS.open("/configDef.json", "r");
@@ -331,23 +337,24 @@ String LoadPidConfig() {
     String sFile;
     while (fileDef.available()) { sFile += char(fileDef.read()); }
     jCfgRoot = json::parse(sFile.c_str(), nullptr, false, true);
-    // Serial.printf("jCfgRoot of def: %s\n", jCfgRoot.dump().c_str());
+    // xSerial.printf("jCfgRoot of def: %s\n", jCfgRoot.dump().c_str());
   } else {
-    Serial.printf("Failed to open file %s for reading\n", fileDef.path());
+    xSerial.printf("Failed to open file %s for reading\n", fileDef.path());
     return "";
   }
 
-  auto file = MyFS.open("/config.json", "r");
-  if (file) {
-    String sFile;
-    while (file.available()) { sFile += char(file.read()); }
-    jCfgRoot = json::parse(sFile.c_str(), nullptr, false, true);
+  char buf[512];
+  auto size = nvs.getBytes("config.json", buf, sizeof(buf));
+  if (size) {
+    buf[size] = 0;
+    xSerial.printf("nvs: config.json found: %s\n", buf);
+    jCfgRoot = json::parse(buf, nullptr, false, true);
   }
-  Serial.printf("jCfgRoot: %s\n", jCfgRoot.dump().c_str());
+  xSerial.printf("jCfgRoot: %s\n", jCfgRoot.dump().c_str());
 
   jCfgPid.clear();
   for (int i=0; i<2; i++) {
-    auto &jPid = jCfgRoot["pid"]["velLoop_pos"][i];
+    auto &jPid = jCfgRoot["pid"]["velLoop_inc"][i];
     jCfgPid.push_back(std::ref(jPid));
     pid_motorSpeed[i].setPID(jPid["p"], jPid["i"], jPid["d"]);
   }
@@ -356,6 +363,7 @@ String LoadPidConfig() {
   sprintf(tmp, R"(N{"pid1_p":%f, "pid1_i":%f, "pid1_d":%f, "pid2_p":%f, "pid2_i":%f, "pid2_d":%f})",
     pid_motorSpeed[0].kp, pid_motorSpeed[0].ki, pid_motorSpeed[0].kd,
     pid_motorSpeed[1].kp, pid_motorSpeed[1].ki, pid_motorSpeed[1].kd);
+  xSerial.print(tmp);
   return tmp;
 }
 
@@ -371,13 +379,12 @@ void UpdataPidConfig(float v[6]) {
     jCfgPid[i].get()["d"] = v[i*3+2];
     pid_motorSpeed[i].setPID(v[i*3], v[i*3+1], v[i*3+2]);
   }
-  // Serial.printf("jCfgRoot: %s\n", jCfgRoot.dump().c_str());
+  // xSerial.printf("jCfgRoot: %s\n", jCfgRoot.dump().c_str());
 
-  auto file = MyFS.open("/config.json", "w");
-  if (file) {
-    file.print(jCfgRoot.dump().c_str());
-  } else {
-    Serial.printf("Failed to open file %s for writing\n", file.path());
+  std::string sFile = jCfgRoot.dump();
+  auto size = nvs.putBytes("config.json", sFile.c_str(), sFile.length());
+  if (size < sFile.length()) {
+    xSerial.printf("nvs: config.json write error\n");
   }
 }
 
@@ -387,11 +394,11 @@ void serverOnPost(AsyncWebServerRequest *request) {
     float speed1, speed2;
     int matched = sscanf(args.c_str(), "%f,%f", &speed1, &speed2);
     if (matched != 2) {
-      Serial.printf("ms: args parse failed, args=%s, matched=%d\n", args.c_str(), matched);
+      xSerial.printf("ms: args parse failed, args=%s, matched=%d\n", args.c_str(), matched);
       stopLoop();
       return;
     } else {
-      Serial.printf("Received: ms=%.3f,%.3f\n", speed1, speed2);
+      xSerial.printf("Received: ms=%.3f,%.3f\n", speed1, speed2);
       setMotorSpeed(1, speed1);
       setMotorSpeed(2, speed2);
     }
@@ -400,11 +407,11 @@ void serverOnPost(AsyncWebServerRequest *request) {
     float v[6];
     int matched = sscanf(args.c_str(), "%f,%f,%f;%f,%f,%f", &v[0], &v[1], &v[2], &v[3], &v[4], &v[5]);
     if (matched != 6) {
-      Serial.printf("pid: args parse failed, args=%s, matched=%d\n", args.c_str(), matched);
+      xSerial.printf("pid: args parse failed, args=%s, matched=%d\n", args.c_str(), matched);
       stopLoop();
       return;
     } else {
-      Serial.printf("Received: pid=%s\n", args.c_str());
+      xSerial.printf("Received: pid=%s\n", args.c_str());
       UpdataPidConfig(v);
     }
   } else {
@@ -415,14 +422,12 @@ void serverOnPost(AsyncWebServerRequest *request) {
   request->send(200, "text/plain", "");  // send resp
 }
 
+bool sseAfConnect = false;
+
 void setup() {
   digitalWrite(pin_ready, 0);
 
-#ifdef Use_tcpSer
-#else
   Serial.begin(115200); // For debugging output
-#endif
-
   Serial.println();
   Serial.println("---- setup ----");
   // printPartition();
@@ -442,7 +447,12 @@ void setup() {
 #endif
 
   if (!MyFS.begin()) {
-    Serial.println("Failed to mount file system");
+    xSerial.println("Failed to mount file system");
+    stopLoop();
+    return;
+  }
+  if (!nvs.begin("config.json", false)) {
+    xSerial.println("Failed to mount NVS");
     stopLoop();
     return;
   }
@@ -475,8 +485,8 @@ void setup() {
   // server.on("/events", HTTP_GET, serverOnSse);
   server.addHandler(&events);
   events.onConnect([/* uiStr */](AsyncEventSourceClient *client){
-    auto uiStr = LoadPidConfig();
-    client->send(uiStr.c_str());
+    // events.send("?");  // events cannot send message in events.onConnect() procedure, other wise crash
+    sseAfConnect = true;
   });
 
   // ws.onEvent(onWebSocketEvent);
@@ -511,10 +521,10 @@ void setup() {
 
   ArduinoOTASetup();
   ArduinoOTA.begin();
-  // Serial.print("Free Heap: ");
-  // Serial.println(ESP.getFreeHeap());
+  // xSerial.print("Free Heap: ");
+  // xSerial.println(ESP.getFreeHeap());
 
-  Serial.println("---- setup finished ----");
+  xSerial.println("---- setup finished ----");
   digitalWrite(pin_ready, 1);
 
   // stopLoop();
@@ -534,10 +544,10 @@ void ArduinoOTASetup()
     }
 
     // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-    Serial.println("Start updating " + type);
+    xSerial.println("Start updating " + type);
   })
   .onEnd([]() {
-    Serial.println("\nOTA End");
+    xSerial.println("\nOTA End");
   })
   // for performance, we don't print progress
   // .onProgress([](unsigned int progress, unsigned int total) {
@@ -545,20 +555,20 @@ void ArduinoOTASetup()
   //   ulong t = millis();
   //   if (t - tb < 500)
   //     return;
-  //   Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+  //   xSerial.printf("Progress: %u%%\r", (progress / (total / 100)));
   // })
   .onError([](ota_error_t error) {
-    Serial.printf("Error[%u]: ", error);
+    xSerial.printf("Error[%u]: ", error);
     if (error == OTA_AUTH_ERROR) {
-      Serial.println("Auth Failed");
+      xSerial.println("Auth Failed");
     } else if (error == OTA_BEGIN_ERROR) {
-      Serial.println("Begin Failed");
+      xSerial.println("Begin Failed");
     } else if (error == OTA_CONNECT_ERROR) {
-      Serial.println("Connect Failed");
+      xSerial.println("Connect Failed");
     } else if (error == OTA_RECEIVE_ERROR) {
-      Serial.println("Receive Failed");
+      xSerial.println("Receive Failed");
     } else if (error == OTA_END_ERROR) {
-      Serial.println("End Failed");
+      xSerial.println("End Failed");
     }
   });
 }
@@ -569,11 +579,11 @@ void DealClientData(WiFiClient *socket) {
   float speed1, speed2;
   int matched = sscanf(cmdArgs.c_str(), "%2s,%f,%f", cmd, &speed1, &speed2);  //%s needs specify the width...
   if (matched != 3) {
-    Serial.printf("cmdArgs parse failed, cmdArgs=%s, matched=%d\n", cmdArgs.c_str(), matched);
+    xSerial.printf("cmdArgs parse failed, cmdArgs=%s, matched=%d\n", cmdArgs.c_str(), matched);
     stopLoop();
     return;
   } else {
-    Serial.printf("Received: %s,%.3f,%.3f\n", cmd, speed1, speed2);
+    xSerial.printf("Received: %s,%.3f,%.3f\n", cmd, speed1, speed2);
     setMotorSpeed(1, speed1);
     setMotorSpeed(2, speed2);
   }
@@ -599,17 +609,24 @@ void loop() {
     // while(1);
   }
 
+  if (sseAfConnect) {
+    sseAfConnect = false;
+    LoadPidConfig();
+    xSerial.println(getBasicData());
+    xSerial.println(getPidPlotStr());
+  }
+
   appPidMotorSpeed();
   calculateOdometry();
 }
 
 void printPartition() {
-  Serial.println("---- printPartition ----");
+  xSerial.println("---- printPartition ----");
 
   esp_partition_iterator_t it = esp_partition_find(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_ANY, NULL);
   while (it != NULL) {
       const esp_partition_t* part = esp_partition_get(it);
-      Serial.printf("Name: %s, Type: %d, SubType: %d, Address: 0x%X, Size: %dKB\n",
+      xSerial.printf("Name: %s, Type: %d, SubType: %d, Address: 0x%X, Size: %dKB\n",
                     part->label, part->type, part->subtype, part->address, part->size / 1024);
       it = esp_partition_next(it);
   }

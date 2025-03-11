@@ -13,10 +13,13 @@ public:
     size_t write(uint8_t) { return 0; }
 
     size_t write(const uint8_t *buffer, size_t size) {
-        if (!sseClient)
-            return 0;
-        String message = String((const char *)buffer, size);
-        sseClient->send(message.c_str());
+        if (!sseClient) {
+            Serial.write(buffer, size);
+        } else {
+            String message = String((const char *)buffer, size);
+            sseClient->send(message.c_str());
+            // Serial.write(buffer, size);
+        }
         return 0;
     }
 
