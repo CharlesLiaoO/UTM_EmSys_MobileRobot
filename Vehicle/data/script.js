@@ -31,11 +31,19 @@ window.onload = function () {  // all html/css/image... loaded
     elmByName("pidApplyBtn").onclick = PidCmd;
 };
 
+function getLogHeader(){
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2,'0');
+    const minutes = now.getMinutes().toString().padStart(2,'0');
+    const sec = now.getSeconds().toString().padStart(2,'0');
+    return `> ${hours}:${minutes}:${sec}    `;
+}
 let logContainer;
 function addLog(message, level="info") {
     const logEntry = document.createElement("div");
-    logEntry.textContent = message;
+    logEntry.textContent = getLogHeader() + message;
     logEntry.style.color = level === "error" ? "red" : level === "warn" ? "orange" : "black";
+    logEntry.style.whiteSpace = "pre-wrap";
 
     logContainer.appendChild(logEntry);
     logContainer.scrollTop = logContainer.scrollHeight;
@@ -46,6 +54,7 @@ const eventSource = new EventSource("/events");
 eventSource.onmessage = function(event) {
     /** @type string */
     var dataStr = event.data;
+    if (dataStr.length == 0) return;  // why empty?
     // document.getElementById('debugMsg').innerText = dataStr;
     if (dataStr.startsWith("<")) {
         dataStr = dataStr.slice(1)
