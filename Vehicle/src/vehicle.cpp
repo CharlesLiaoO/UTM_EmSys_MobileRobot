@@ -48,20 +48,20 @@ void ArduinoOTASetup();
 const int pin_ready = 2;
 
 // mcu output pins to motor driver input
-const int motor1_In1 = 17;
-const int motor1_In2 = 16;
-const int motor1_PWM = 4;
+const int motor1_In1 = 19;
+const int motor1_In2 = 18;
+const int motor1_PWM = 21;
 const int motor_STB = 5;  // standby
-const int motor2_In1 = 18;
-const int motor2_In2 = 19;
-const int motor2_PWM = 21;
+const int motor2_In1 = 16;
+const int motor2_In2 = 17;
+const int motor2_PWM = 4;
 
 // mcu input pins for motor's encoder
-const int encoder1_C = 25;
-const int encoder1_D = 26;
-const int encoder2_C = 32;
-const int encoder2_D = 33;
-bool motor_dir[2];
+const int encoder1_C = 32;
+const int encoder1_D = 33;
+const int encoder2_C = 25;
+const int encoder2_D = 26;
+// bool motor_dir[2];
 const int pinBattery = 35;
 
 // Variables for velocity, position
@@ -96,33 +96,27 @@ double angularVelocity_b = 0;
 double posX = 0;  // robot's position X in meter
 double posY = 0;
 double heading = 90.0 * PI/180;  // robot's Heading angle in radian
-float heading_deg = 0;
+float heading_deg = 90;
 
 // Interrupt service routines for encoder counting
 float simBySpd_EncDt1 = 0;
 float simBySpd_EncDt2 = 0;
 const int encoder_dt = 1;  // sim: use 1 in physical project
 void IRAM_ATTR encoder1_ISR() {
-  // if (digitalRead(encoder1_D))
-  // if (!digitalRead(motor1_In1)) {
-  if (motor_dir[0]) {
+  if (digitalRead(encoder1_D)) {
+  // if (motor_dir[0]) {
     encoder1_Count = encoder1_Count + encoder_dt;
-    // Serial.println("1++");
   } else {
     encoder1_Count = encoder1_Count - encoder_dt;
-    // Serial.println("1--");
   }
 }
 
 void IRAM_ATTR encoder2_ISR() {
-  // if (digitalRead(encoder2_D))
-  // if (!digitalRead(motor2_In1)) {
-  if (motor_dir[1]) {
+  if (!digitalRead(encoder2_D)) {
+  // if (motor_dir[1]) {
     encoder2_Count = encoder2_Count + encoder_dt;
-    // Serial.println("2++");
   } else {
     encoder2_Count = encoder2_Count - encoder_dt;
-    // Serial.println("2--");
   }
 }
 
@@ -160,11 +154,11 @@ void setMotorSpeed(int motor, float speed) {
   } else if (speed > 0) {
     digitalWrite(motorPin[mi].in_1_L, HIGH);
     digitalWrite(motorPin[mi].in_2_R, LOW);
-    motor_dir[mi] = true;
+    // motor_dir[mi] = true;
   } else {
     digitalWrite(motorPin[mi].in_1_L, LOW);
     digitalWrite(motorPin[mi].in_2_R, HIGH);
-    motor_dir[mi] = false;
+    // motor_dir[mi] = false;
   }
 
   if (!usePid) {
@@ -509,9 +503,9 @@ void setup() {
 
   // Encoder pins setup
   pinMode(encoder1_C, INPUT);    // INPUT_PULLUP
-  // pinMode(encoder1_D, INPUT);
+  pinMode(encoder1_D, INPUT);
   pinMode(encoder2_C, INPUT);
-  // pinMode(encoder2_D, INPUT);
+  pinMode(encoder2_D, INPUT);
   attachInterrupt(digitalPinToInterrupt(encoder1_C), encoder1_ISR, FALLING);    //RISING
   attachInterrupt(digitalPinToInterrupt(encoder2_C), encoder2_ISR, FALLING);
 
