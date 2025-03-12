@@ -2,456 +2,456 @@
 <html>
 
 <head>
-    <title>lch-EmSys_Vehicle Control</title>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="robots" content="index,follow" />
-    <meta name="generator" content="GrapesJS Studio" />
-    <script src="script.js"></script>
-    <!-- from plotly v3, must specify version -->
-    <script src="https://cdn.plot.ly/plotly-basic-3.0.1.min.js" charset="utf-8"></script>
-    <script src="joy.min.js" charset="utf-8"></script>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+  <title>lch-EmSys_Vehicle Control</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="index,follow" />
+  <meta name="generator" content="GrapesJS Studio" />
+  <script src="script.js"></script>
+  <!-- from plotly v3, must specify version -->
+  <script src="https://cdn.plot.ly/plotly-basic-3.0.1.min.js" charset="utf-8"></script>
+  <script src="joy.min.js" charset="utf-8"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-        body {
-            margin: 0;
-        }
+    body {
+      margin: 0;
+    }
 
-        .gjs-heading {
-            margin: 0;
-            color: rgba(29, 40, 55, 1);
-        }
+    .gjs-heading {
+      margin: 0;
+      color: rgba(29, 40, 55, 1);
+    }
 
-        .gjs-link {
-            vertical-align: top;
-            max-width: 100%;
-            display: inline-block;
-            text-decoration: none;
-            color: inherit;
-            transition: color 0.3s ease 0s;
-        }
+    .gjs-link {
+      vertical-align: top;
+      max-width: 100%;
+      display: inline-block;
+      text-decoration: none;
+      color: inherit;
+      transition: color 0.3s ease 0s;
+    }
 
-        .text-content {
-            line-height: 20px;
-        }
+    .text-content {
+      line-height: 20px;
+    }
 
-        .text-main-content {
-            line-height: 30px;
-            font-size: 1.2rem;
-        }
+    .text-main-content {
+      line-height: 30px;
+      font-size: 1.2rem;
+    }
 
-        #iau9 {
-            font-family: Arial, Helvetica, sans-serif;
-            color: #475569;
-        }
+    #iau9 {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #475569;
+    }
 
-        .gjs-grid-column.feature-item {
-            padding-top: 15px;
-            padding-right: 15px;
-            padding-bottom: 15px;
-            padding-left: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            min-width: 30%;
-        }
+    .gjs-grid-column.feature-item {
+      padding-top: 15px;
+      padding-right: 15px;
+      padding-bottom: 15px;
+      padding-left: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      min-width: 30%;
+    }
 
-        .gjs-grid-column.testimonial-item {
-            padding-top: 15px;
-            padding-right: 15px;
-            padding-bottom: 15px;
-            padding-left: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            min-width: 45%;
-            background-color: rgba(247, 247, 247, 0.23);
-            border-top-left-radius: 5px;
-            border-top-right-radius: 5px;
-            border-bottom-right-radius: 5px;
-            border-bottom-left-radius: 5px;
-            align-items: flex-start;
-            border-top-width: 1px;
-            border-right-width: 1px;
-            border-bottom-width: 1px;
-            border-left-width: 1px;
-            border-top-style: solid;
-            border-right-style: solid;
-            border-bottom-style: solid;
-            border-left-style: solid;
-            border-top-color: rgba(0, 0, 0, 0.06);
-            border-right-color: rgba(0, 0, 0, 0.06);
-            border-bottom-color: rgba(0, 0, 0, 0.06);
-            border-left-color: rgba(0, 0, 0, 0.06);
-        }
+    .gjs-grid-column.testimonial-item {
+      padding-top: 15px;
+      padding-right: 15px;
+      padding-bottom: 15px;
+      padding-left: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      min-width: 45%;
+      background-color: rgba(247, 247, 247, 0.23);
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+      border-bottom-right-radius: 5px;
+      border-bottom-left-radius: 5px;
+      align-items: flex-start;
+      border-top-width: 1px;
+      border-right-width: 1px;
+      border-bottom-width: 1px;
+      border-left-width: 1px;
+      border-top-style: solid;
+      border-right-style: solid;
+      border-bottom-style: solid;
+      border-left-style: solid;
+      border-top-color: rgba(0, 0, 0, 0.06);
+      border-right-color: rgba(0, 0, 0, 0.06);
+      border-bottom-color: rgba(0, 0, 0, 0.06);
+      border-left-color: rgba(0, 0, 0, 0.06);
+    }
 
-        .gjs-button {
-            vertical-align: top;
-            max-width: 100%;
-            display: inline-block;
-            text-decoration: none;
-            color: white;
-            padding-right: 15px;
-            padding-bottom: 10px;
-            padding-left: 15px;
-            background-color: rgb(36, 99, 235);
-            border-top-left-radius: 5px;
-            border-top-right-radius: 5px;
-            border-bottom-right-radius: 5px;
-            border-bottom-left-radius: 5px;
-            padding-top: 10px;
-            font-size: 1.1rem;
-            text-align: center;
-        }
+    .gjs-button {
+      vertical-align: top;
+      max-width: 100%;
+      display: inline-block;
+      text-decoration: none;
+      color: white;
+      padding-right: 15px;
+      padding-bottom: 10px;
+      padding-left: 15px;
+      background-color: rgb(36, 99, 235);
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+      border-bottom-right-radius: 5px;
+      border-bottom-left-radius: 5px;
+      padding-top: 10px;
+      font-size: 1.1rem;
+      text-align: center;
+    }
 
-        .gjs-text-blue {
-            color: rgb(36, 99, 235);
-        }
+    .gjs-text-blue {
+      color: rgb(36, 99, 235);
+    }
 
-        .gjs-link:hover {
-            color: rgb(36, 99, 235);
-            text-decoration: underline;
-        }
+    .gjs-link:hover {
+      color: rgb(36, 99, 235);
+      text-decoration: underline;
+    }
 
-        .gjs-icon.gjs-feature-icon {
-            padding-top: 10px;
-            padding-right: 10px;
-            padding-bottom: 10px;
-            padding-left: 10px;
-            background-color: rgb(36, 99, 235);
-            color: white;
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-            border-bottom-right-radius: 10px;
-            border-bottom-left-radius: 10px;
-        }
+    .gjs-icon.gjs-feature-icon {
+      padding-top: 10px;
+      padding-right: 10px;
+      padding-bottom: 10px;
+      padding-left: 10px;
+      background-color: rgb(36, 99, 235);
+      color: white;
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+      border-bottom-right-radius: 10px;
+      border-bottom-left-radius: 10px;
+    }
 
-        * {
-            box-sizing: border-box;
-        }
+    * {
+      box-sizing: border-box;
+    }
 
-        body {
-            margin: 0;
-        }
+    body {
+      margin: 0;
+    }
 
-        .robot_td {
-            border-bottom-style: solid;
-            border-bottom-width: 1px;
-        }
+    .robot_td {
+      border-bottom-style: solid;
+      border-bottom-width: 1px;
+    }
 
-        .robot_th {
-            border-top-width: 2px;
-            border-bottom-width: 2px;
-            border-top-style: solid;
-            border-bottom-style: solid;
-        }
+    .robot_th {
+      border-top-width: 2px;
+      border-bottom-width: 2px;
+      border-top-style: solid;
+      border-bottom-style: solid;
+    }
 
-        .form_row_center {
-            display: flex;
-            justify-content: space-between;
-            padding-right: 20px;
-            padding-left: 20px;
-        }
+    .form_row_center {
+      display: flex;
+      justify-content: space-between;
+      padding-right: 20px;
+      padding-left: 20px;
+    }
 
-        .select_no_border {
-            border-top-style: none;
-            border-right-style: none;
-            border-bottom-style: none;
-            border-left-style: none;
-        }
+    .select_no_border {
+      border-top-style: none;
+      border-right-style: none;
+      border-bottom-style: none;
+      border-left-style: none;
+    }
 
-        .num_input_width {
-            width: 3em;
-        }
+    .num_input_width {
+      width: 3em;
+    }
 
-        #i2uku {
-            text-align: center;
-            display: none;
-        }
+    #i2uku {
+      text-align: center;
+      display: none;
+    }
 
-        .gjs-grid-column {
-            flex: 1 1 0%;
-        }
+    .gjs-grid-column {
+      flex: 1 1 0%;
+    }
 
-        .gjs-grid-row {
-            display: flex;
-            justify-content: flex-start;
-            align-items: stretch;
-            flex-direction: row;
-            min-height: auto;
-            padding: 10px 0;
-        }
+    .gjs-grid-row {
+      display: flex;
+      justify-content: flex-start;
+      align-items: stretch;
+      flex-direction: row;
+      min-height: auto;
+      padding: 10px 0;
+    }
 
-        #i1ai7b {
-            flex: 0 1 auto;
-            padding-left: 20px;
-            padding-right: 5px;
-        }
+    #i1ai7b {
+      flex: 0 1 auto;
+      padding-left: 20px;
+      padding-right: 5px;
+    }
 
-        #ihn5g3 {
-            justify-content: center;
-            display: flex;
-        }
+    #ihn5g3 {
+      justify-content: center;
+      display: flex;
+    }
 
-        #irl3bu {
-            padding-left: 10px;
-            padding-right: 10px;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
+    #irl3bu {
+      padding-left: 10px;
+      padding-right: 10px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
 
-        #in6qqk {
-            align-self: stretch;
-            display: flex;
-            justify-content: center;
-            flex: 1 0 0%;
-        }
+    #in6qqk {
+      align-self: stretch;
+      display: flex;
+      justify-content: center;
+      flex: 1 0 0%;
+    }
 
-        #iekai {
-            text-align: left;
-        }
+    #iekai {
+      text-align: left;
+    }
 
-        #robot_table {
-            width: 250px;
-        }
+    #robot_table {
+      width: 250px;
+    }
 
-        #i2kktr {
-            flex: 0 1 auto;
-        }
+    #i2kktr {
+      flex: 0 1 auto;
+    }
 
-        #logContainer {
-            overflow-y: auto;
-            margin-top: 5px;
-            margin-right: 5px;
-            margin-bottom: 5px;
-            margin-left: 5px;
-            min-width: 600px;
-            max-width: 800px;
-            justify-content: center;
-            align-items: center;
-            flex: 1 1 0%;
-            border-top-left-radius: 4px;
-            border-top-right-radius: 4px;
-            border-bottom-right-radius: 4px;
-            border-bottom-left-radius: 4px;
-            border-top-width: 2px;
-            border-right-width: 2px;
-            border-bottom-width: 2px;
-            border-left-width: 2px;
-            border-top-color: rgba(0, 0, 0, 0.5);
-            border-right-color: rgba(0, 0, 0, 0.5);
-            border-bottom-color: rgba(0, 0, 0, 0.5);
-            border-left-color: rgba(0, 0, 0, 0.5);
-            border-top-style: groove;
-            border-right-style: groove;
-            border-bottom-style: groove;
-            border-left-style: groove;
-            height: 150px;
-        }
+    #logContainer {
+      overflow-y: auto;
+      margin-top: 5px;
+      margin-right: 5px;
+      margin-bottom: 5px;
+      margin-left: 5px;
+      min-width: 600px;
+      max-width: 800px;
+      justify-content: center;
+      align-items: center;
+      flex: 1 1 0%;
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+      border-bottom-right-radius: 4px;
+      border-bottom-left-radius: 4px;
+      border-top-width: 2px;
+      border-right-width: 2px;
+      border-bottom-width: 2px;
+      border-left-width: 2px;
+      border-top-color: rgba(0, 0, 0, 0.5);
+      border-right-color: rgba(0, 0, 0, 0.5);
+      border-bottom-color: rgba(0, 0, 0, 0.5);
+      border-left-color: rgba(0, 0, 0, 0.5);
+      border-top-style: groove;
+      border-right-style: groove;
+      border-bottom-style: groove;
+      border-left-style: groove;
+      height: 150px;
+    }
 
-        #motorChart {
-            min-height: 400px;
-            max-height: 400px;
-            min-width: 800px;
-            max-width: 1000px;
-            flex: 1 0 0%;
-        }
+    #motorChart {
+      min-height: 400px;
+      max-height: 400px;
+      min-width: 800px;
+      max-width: 1000px;
+      flex: 1 0 0%;
+    }
 
-        #joystick {
-            width: 200px;
-            height: 200px;
-        }
+    #joystick {
+      width: 200px;
+      height: 200px;
+    }
 
-        #iv4bs2 {
-            margin-left: 10px;
-            margin-bottom: 4px;
-            height: 1.5em;
-        }
+    #iv4bs2 {
+      margin-left: 10px;
+      margin-bottom: 4px;
+      height: 1.5em;
+    }
 
-        @media (max-width: 992px) {
-            .gjs-grid-row {
-                flex-direction: column;
-            }
+    @media (max-width: 992px) {
+      .gjs-grid-row {
+        flex-direction: column;
+      }
 
-            #irl3bu {
-                flex-direction: row;
-            }
+      #irl3bu {
+        flex-direction: row;
+      }
 
-            #i2kktr {
-                display: flex;
-                align-items: center;
-            }
+      #i2kktr {
+        display: flex;
+        align-items: center;
+      }
 
-            #motorChart {
-                min-width: 700px;
-            }
-        }
+      #motorChart {
+        min-width: 700px;
+      }
+    }
 
-        @media (max-width: 920px) {
-            .gjs-grid-row {
-                flex-direction: column;
-            }
-        }
+    @media (max-width: 920px) {
+      .gjs-grid-row {
+        flex-direction: column;
+      }
+    }
 
-        @media (max-width: 768px) {
-            .form_row_center {
-                padding-right: 0px;
-            }
+    @media (max-width: 768px) {
+      .form_row_center {
+        padding-right: 0px;
+      }
 
-            #i1ai7b {
-                padding-left: 0px;
-                padding-right: 0px;
-            }
+      #i1ai7b {
+        padding-left: 0px;
+        padding-right: 0px;
+      }
 
-            #motorChart {
-                min-width: 500px;
-                min-height: 300px;
-            }
+      #motorChart {
+        min-width: 500px;
+        min-height: 300px;
+      }
 
-            #logContainer {
-                min-width: 300px;
-            }
-        }
+      #logContainer {
+        min-width: 300px;
+      }
+    }
 
-        @media (max-width: 480px) {
-            .robot_table_text {
-                font-size: 0.9em;
-            }
+    @media (max-width: 480px) {
+      .robot_table_text {
+        font-size: 0.9em;
+      }
 
-            #motorChart {
-                min-width: 300px;
-                min-height: 200px;
-            }
-        }
-    </style>
+      #motorChart {
+        min-width: 300px;
+        min-height: 200px;
+      }
+    }
+  </style>
 </head>
 
 <body id="iau9">
-    <h2 id="i2uku" class="text-center"><strong id="iravg">lch-VehicleControl</strong></h2>
-    <div id="irl3bu" class="gjs-grid-row">
-        <div id="in6qqk" class="gjs-grid-column">
-            <div id="motorChart">
-                <script src="pidPlot.js"></script>
-            </div>
-        </div>
-        <div id="i1ai7b" class="gjs-grid-column">
-            <table id="robot_table">
-                <thead id="iekai">
-                    <tr id="i6lqz">
-                        <th id="i91nk" class="robot_th">
-                            <div id="iwd2os" class="robot_table_text">Name</div>
-                        </th>
-                        <th id="ijzgo" class="robot_th">
-                            <div id="iwd2os-2" class="robot_table_text">Value</div>
-                        </th>
-                        <th id="ilghm" class="robot_th">
-                            <div id="iwd2os-3" class="robot_table_text">Unit</div>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody id="ic46f">
-                    <tr id="iqjlj">
-                        <td id="i4vtd" class="robot_td">
-                            <div id="iwd2os-4" class="robot_table_text">cyc_time</div>
-                        </td>
-                        <td class="robot_td" id="ikr2m">
-                            <div id="cyc_time" class="robot_table_text">0</div>
-                        </td>
-                        <td id="i3xvw" class="robot_td">
-                            <div id="iwd2os-4-3" class="robot_table_text">s</div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td id="il9xz" class="robot_td">
-                            <div id="iwd2os-6" class="robot_table_text">v_linear</div>
-                        </td>
-                        <td class="robot_td">
-                            <div id="v_linear" class="robot_table_text">0</div>
-                        </td>
-                        <td id="imjr3" class="robot_td">
-                            <div id="iwd2os-4-5" class="robot_table_text">m/s</div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td id="imgvv" class="robot_td">
-                            <div id="iwd2os-5" class="robot_table_text">v_angle</div>
-                        </td>
-                        <td class="robot_td">
-                            <div id="v_angle" class="robot_table_text">0</div>
-                        </td>
-                        <td id="ihfrq" class="robot_td">
-                            <div id="iwd2os-4-7" class="robot_table_text">deg/s</div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td id="ivio6" class="robot_td">
-                            <div id="iwd2os-4-2-2" class="robot_table_text">x</div>
-                        </td>
-                        <td class="robot_td">
-                            <div id="x" class="robot_table_text">0</div>
-                        </td>
-                        <td id="iy85o" class="robot_td">
-                            <div id="iwd2os-4-9" class="robot_table_text">m</div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td id="i0xv7" class="robot_td">
-                            <div id="iwd2os-3-2" class="robot_table_text">y</div>
-                        </td>
-                        <td class="robot_td">
-                            <div id="y" class="robot_table_text">0</div>
-                        </td>
-                        <td id="i9jel" class="robot_td">
-                            <div id="iwd2os-4-11" class="robot_table_text">m</div>
-                        </td>
-                    </tr>
-                    <tr id="ikntk">
-                        <td id="id17g" class="robot_td">
-                            <div id="iwd2os-2-2" class="robot_table_text">h</div>
-                        </td>
-                        <td class="robot_td">
-                            <div id="h" class="robot_table_text">0</div>
-                        </td>
-                        <td id="ijvo1" class="robot_td">
-                            <div id="iwd2os-4-13" class="robot_table_text">deg</div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div id="i2kktr" class="gjs-grid-column">
-            <div id="iz3pt3" class="gjs-custom-code">
-                <div id="joystick"></div>
-            </div>
-            <form method="get" id="ivas8a" action="">
-                <label id="ift2iy">PID:</label><button type="button" id="iv4bs2" name="pidApplyBtn">Apply</button>
-                <div id="ijxi1n" class="form_row_center">
-                    <label id="ihizyg">1: </label><input type="text" id="igdcxt" placeholder="P" name="pid1_p" class="num_input_width"/><input type="text" id="i7u23v" name="pid1_i" placeholder="I" class="num_input_width"/><input type="text" id="i3q335" name="pid1_d" placeholder="D" class="num_input_width"/>
-                </div>
-                <div id="ijxi1n-3" class="form_row_center">
-                    <label id="ihizyg-3">2: </label><input type="text" id="igdcxt-2" placeholder="P" name="pid2_p" class="num_input_width"/><input type="text" id="i7u23v-2" name="pid2_i" placeholder="I" class="num_input_width"/><input type="text" id="i3q335-2" name="pid2_d" placeholder="D" class="num_input_width"/>
-                </div><label id="ift2iy-2">Speed:</label>
-                <div id="ijxi1n-2" class="form_row_center">
-                    <label id="ihizyg-2">Straight:</label><select type="text" id="il42zh-2-3" name="Straight" options="[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object]" class="select_no_border"><option value="opt4">150</option></select>
-                </div>
-                <div id="ivw14w" class="form_row_center">
-                    <label id="i1s9uf">Turn:</label><select type="text" id="il42zh-2-2" name="Turn" options="[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object]" class="select_no_border"><option value="opt1">100</option></select>
-                </div>
-                <div id="ixq7fg" class="form_row_center">
-                    <label id="iy69mw">Rotate:</label><select type="text" id="il42zh-2-2-2" name="Rotate" options="[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object]" class="select_no_border"><option value="opt7">75</option></select>
-                </div>
-            </form>
-        </div>
-        <div id="ihn5g3" class="gjs-grid-column">
-            <div id="logContainer" title="">
-                <div id="iyre5c">Messages:</div>
-            </div>
-        </div>
+  <h2 id="i2uku" class="text-center"><strong id="iravg">lch-VehicleControl</strong></h2>
+  <div id="irl3bu" class="gjs-grid-row">
+    <div id="in6qqk" class="gjs-grid-column">
+      <div id="motorChart">
+        <script src="pidPlot.js"></script>
+      </div>
     </div>
+    <div id="i1ai7b" class="gjs-grid-column">
+      <table id="robot_table">
+        <thead id="iekai">
+          <tr id="i6lqz">
+            <th id="i91nk" class="robot_th">
+              <div id="iwd2os" class="robot_table_text">Name</div>
+            </th>
+            <th id="ijzgo" class="robot_th">
+              <div id="iwd2os-2" class="robot_table_text">Value</div>
+            </th>
+            <th id="ilghm" class="robot_th">
+              <div id="iwd2os-3" class="robot_table_text">Unit</div>
+            </th>
+          </tr>
+        </thead>
+        <tbody id="ic46f">
+          <tr id="iqjlj">
+            <td id="i4vtd" class="robot_td">
+              <div id="iwd2os-4" class="robot_table_text">cyc_time</div>
+            </td>
+            <td class="robot_td" id="ikr2m">
+              <div id="cyc_time" class="robot_table_text">0</div>
+            </td>
+            <td id="i3xvw" class="robot_td">
+              <div id="iwd2os-4-3" class="robot_table_text">s</div>
+            </td>
+          </tr>
+          <tr>
+            <td id="il9xz" class="robot_td">
+              <div id="iwd2os-6" class="robot_table_text">v_linear</div>
+            </td>
+            <td class="robot_td">
+              <div id="v_linear" class="robot_table_text">0</div>
+            </td>
+            <td id="imjr3" class="robot_td">
+              <div id="iwd2os-4-5" class="robot_table_text">m/s</div>
+            </td>
+          </tr>
+          <tr>
+            <td id="imgvv" class="robot_td">
+              <div id="iwd2os-5" class="robot_table_text">v_angle</div>
+            </td>
+            <td class="robot_td">
+              <div id="v_angle" class="robot_table_text">0</div>
+            </td>
+            <td id="ihfrq" class="robot_td">
+              <div id="iwd2os-4-7" class="robot_table_text">deg/s</div>
+            </td>
+          </tr>
+          <tr>
+            <td id="ivio6" class="robot_td">
+              <div id="iwd2os-4-2-2" class="robot_table_text">x</div>
+            </td>
+            <td class="robot_td">
+              <div id="x" class="robot_table_text">0</div>
+            </td>
+            <td id="iy85o" class="robot_td">
+              <div id="iwd2os-4-9" class="robot_table_text">m</div>
+            </td>
+          </tr>
+          <tr>
+            <td id="i0xv7" class="robot_td">
+              <div id="iwd2os-3-2" class="robot_table_text">y</div>
+            </td>
+            <td class="robot_td">
+              <div id="y" class="robot_table_text">0</div>
+            </td>
+            <td id="i9jel" class="robot_td">
+              <div id="iwd2os-4-11" class="robot_table_text">m</div>
+            </td>
+          </tr>
+          <tr id="ikntk">
+            <td id="id17g" class="robot_td">
+              <div id="iwd2os-2-2" class="robot_table_text">h</div>
+            </td>
+            <td class="robot_td">
+              <div id="h" class="robot_table_text">0</div>
+            </td>
+            <td id="ijvo1" class="robot_td">
+              <div id="iwd2os-4-13" class="robot_table_text">deg</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="i2kktr" class="gjs-grid-column">
+      <div id="iz3pt3" class="gjs-custom-code">
+        <div id="joystick"></div>
+      </div>
+      <form method="get" id="ivas8a" action="">
+        <label id="ift2iy">PID:</label><button type="button" id="iv4bs2" name="pidApplyBtn">Apply</button>
+        <div id="ijxi1n" class="form_row_center">
+          <label id="ihizyg">1: </label><input type="text" id="igdcxt" placeholder="P" name="pid1_p" class="num_input_width"/><input type="text" id="i7u23v" name="pid1_i" placeholder="I" class="num_input_width"/><input type="text" id="i3q335" name="pid1_d" placeholder="D" class="num_input_width"/>
+        </div>
+        <div id="ijxi1n-3" class="form_row_center">
+          <label id="ihizyg-3">2: </label><input type="text" id="igdcxt-2" placeholder="P" name="pid2_p" class="num_input_width"/><input type="text" id="i7u23v-2" name="pid2_i" placeholder="I" class="num_input_width"/><input type="text" id="i3q335-2" name="pid2_d" placeholder="D" class="num_input_width"/>
+        </div><label id="ift2iy-2">Speed:</label>
+        <div id="ijxi1n-2" class="form_row_center">
+          <label id="ihizyg-2">Straight:</label><select type="text" id="il42zh-2-3" name="Straight" options="[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object]" class="select_no_border"><option value="opt4">150</option></select>
+        </div>
+        <div id="ivw14w" class="form_row_center">
+          <label id="i1s9uf">Turn:</label><select type="text" id="il42zh-2-2" name="Turn" options="[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object]" class="select_no_border"><option value="opt1">100</option></select>
+        </div>
+        <div id="ixq7fg" class="form_row_center">
+          <label id="iy69mw">Rotate:</label><select type="text" id="il42zh-2-2-2" name="Rotate" options="[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object],[object Object]" class="select_no_border"><option value="opt7">75</option></select>
+        </div>
+      </form>
+    </div>
+    <div id="ihn5g3" class="gjs-grid-column">
+      <div id="logContainer" title="">
+        <div id="iyre5c">Messages:</div>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>
