@@ -62,6 +62,7 @@ const int encoder1_D = 26;
 const int encoder2_C = 32;
 const int encoder2_D = 33;
 bool motor_dir[2];
+const int pinBattery = 35;
 
 // Variables for velocity, position
 int encoder1_Count = 0;
@@ -514,6 +515,8 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(encoder1_C), encoder1_ISR, FALLING);    //RISING
   attachInterrupt(digitalPinToInterrupt(encoder2_C), encoder2_ISR, FALLING);
 
+  pinMode(pinBattery, INPUT);
+
   pinMode(pi_DebugPID, INPUT_PULLDOWN);
   attachInterrupt(digitalPinToInterrupt(pi_DebugPID), DebugPID, RISING);
 
@@ -573,23 +576,23 @@ void ArduinoOTASetup()
   });
 }
 
-void DealClientData(WiFiClient *socket) {
-  String cmdArgs = socket->readStringUntil('\n');
-  char cmd[512];
-  float speed1, speed2;
-  int matched = sscanf(cmdArgs.c_str(), "%2s,%f,%f", cmd, &speed1, &speed2);  //%s needs specify the width...
-  if (matched != 3) {
-    xSerial.printf("cmdArgs parse failed, cmdArgs=%s, matched=%d\n", cmdArgs.c_str(), matched);
-    stopLoop();
-    return;
-  } else {
-    xSerial.printf("Received: %s,%.3f,%.3f\n", cmd, speed1, speed2);
-    setMotorSpeed(1, speed1);
-    setMotorSpeed(2, speed2);
+void BatteryCheck() {
+  static ulong t_batteryB = 0;
+  ulong t_battery = millis();
+  if (t_battery - t_batteryB > 5000) {
+    t_batteryB = t_battery;
+    const float maxV = 3.7 * 2 / 11.0;  // 2 3.7V battery; 11.0: TB6612 model voltage divider
+    float curV = analogRead(pinBattery) / 4095.0 * 3.3;
+    int percentage = curV / maxV * 100;
+    if (percentage < 20) {
+      xSerial.println("Battery Low");
+    }
   }
 }
 
 void loop() {
+  BatteryCheck();
+
 #ifdef Use_tcpSer
   if (tcpSerCl) {  // == tcpSerCl.connected()
   } else {
