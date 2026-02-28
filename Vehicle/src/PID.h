@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cfloat>
 
 class PID
@@ -8,7 +10,7 @@ public:
     float kp = 0;
     float ki = 0;
     float kd = 0;
-    float output_min = FLT_MIN;
+    float output_min = -FLT_MAX;
     float output_max = FLT_MAX;
     float integral_limit = FLT_MAX;
     // 1.2 automatically by program
@@ -32,7 +34,7 @@ public:
         ki = i;
         kd = d;
     }
-    void setLimit(float output_min=FLT_MIN, float output_max=FLT_MAX, float integral_limit=FLT_MAX) {
+    void setLimit(float output_min, float output_max, float integral_limit=FLT_MAX) {
         this->output_min = output_min;
         this->output_max = output_max;
         this->integral_limit = integral_limit;
